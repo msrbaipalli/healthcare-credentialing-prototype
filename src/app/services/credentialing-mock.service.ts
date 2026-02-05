@@ -12,7 +12,7 @@ export interface Provider {
     state: string;
     lastVerifiedAt: string; // ISO
     status: VerificationStatus;
-    riskScore: number; // 0-100 (higher = more risk)
+    riskScore: number
 }
 
 export interface VerificationCheck {
@@ -20,7 +20,7 @@ export interface VerificationCheck {
     source: string;
     status: VerificationStatus;
     details: string;
-    checkedAt: string; // ISO
+    checkedAt: string;
 }
 
 export interface LedgerEntry {
@@ -28,7 +28,7 @@ export interface LedgerEntry {
     txHash: string;
     action: string;
     actor: string;
-    timestamp: string; // ISO
+    timestamp: string;
     summary: string;
 }
 
