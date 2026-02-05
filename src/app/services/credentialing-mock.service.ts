@@ -10,9 +10,9 @@ export interface Provider {
     specialty: string;
     organization: string;
     state: string;
-    lastVerifiedAt: string; // ISO
+    lastVerifiedAt: string;
     status: VerificationStatus;
-    riskScore: number
+    riskScore: number;
 }
 
 export interface VerificationCheck {
