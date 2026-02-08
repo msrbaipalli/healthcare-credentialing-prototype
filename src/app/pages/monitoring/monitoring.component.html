@@ -1,0 +1,60 @@
+<mat-card class="head">
+    <div class="title">
+        <div class="h1">Continuous Monitoring</div>
+        <div class="muted">AI agents watch for changes across sources and raise operational alerts.</div>
+    </div>
+
+    <div class="search">
+        <mat-icon>search</mat-icon>
+        <input matInput [formControl]="query" placeholder="Filter alerts by keyword..." />
+    </div>
+</mat-card>
+
+<div class="grid">
+    <mat-card class="alert" *ngFor="let a of filtered()">
+        <div class="row">
+            <div class="left">
+                <div class="alert-title">{{ a.title }}</div>
+                <div class="muted">
+                    {{ providerName(a.providerId) }} · {{ a.source }} · {{ a.createdAt | date:'MMM d, y · h:mm a' }}
+                </div>
+            </div>
+
+            <span [class]="chipClass(a.severity)">
+                <mat-icon class="chip-icon">{{ severityIcon(a.severity) }}</mat-icon>
+                {{ a.severity | uppercase }}
+            </span>
+        </div>
+
+        <div class="details">{{ a.details }}</div>
+
+        <mat-divider></mat-divider>
+
+        <div class="footer">
+            <div class="rec">
+                <mat-icon>lightbulb</mat-icon>
+                <div>
+                    <div class="rec-title">Recommended action</div>
+                    <div class="muted">{{ a.recommendedAction }}</div>
+                </div>
+            </div>
+
+            <div class="actions">
+                <button mat-stroked-button (click)="selectProvider(a.providerId)">
+                    <mat-icon>person</mat-icon>
+                    Open Provider
+                </button>
+
+                <button mat-stroked-button (click)="ack(a.id)" [disabled]="a.status !== 'open'">
+                    <mat-icon>done</mat-icon>
+                    Acknowledge
+                </button>
+
+                <button mat-flat-button (click)="resolve(a.id)" [disabled]="a.status === 'resolved'">
+                    <mat-icon>check_circle</mat-icon>
+                    Resolve
+                </button>
+            </div>
+        </div>
+    </mat-card>
+</div>

@@ -1,0 +1,41 @@
+<mat-card class="head">
+    <div>
+        <div class="h1">Evidence Export</div>
+        <div class="muted">Audit-ready bundle preview: checks, timestamps, and ledger anchors (mock).</div>
+    </div>
+
+    <div class="picker">
+        <mat-icon>person</mat-icon>
+        <mat-select [formControl]="selectedId">
+            <mat-option *ngFor="let p of providersSig()" [value]="p.id">
+                {{ p.fullName }} ({{ p.state }})
+            </mat-option>
+        </mat-select>
+
+        <button mat-flat-button>
+            <mat-icon>download</mat-icon>
+            Export Bundle
+        </button>
+    </div>
+</mat-card>
+
+<div class="grid">
+    <mat-card class="item" *ngFor="let e of evidence()">
+        <div class="row">
+            <div class="left">
+                <div class="title">{{ e.title }}</div>
+                <div class="muted">{{ e.category | uppercase }} · {{ e.source }} · {{ e.timestamp | date:'MMM d, y ·
+                    h:mm a' }}</div>
+            </div>
+
+            <span [class]="chipClass(e.status)">
+                <mat-icon class="chip-icon">{{ statusIcon(e.status) }}</mat-icon>
+                {{ e.status | uppercase }}
+            </span>
+        </div>
+
+        <mat-divider></mat-divider>
+
+        <div class="summary">{{ e.summary }}</div>
+    </mat-card>
+</div>

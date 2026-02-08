@@ -1,0 +1,86 @@
+.head {
+    padding: 14px;
+    border-radius: 16px;
+    margin-bottom: 14px;
+    display: flex;
+    gap: 14px;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+}
+
+.h1 {
+    font-size: 18px;
+    font-weight: 900;
+}
+
+.muted {
+    font-size: 12px;
+    opacity: 0.8;
+}
+
+.picker {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.grid {
+    display: grid;
+    gap: 14px;
+}
+
+.item {
+    padding: 14px;
+    border-radius: 16px;
+}
+
+.row {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: flex-start;
+}
+
+.title {
+    font-weight: 900;
+}
+
+.summary {
+    margin-top: 10px;
+    opacity: 0.92;
+}
+
+.chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 900;
+    background: rgba(0, 0, 0, 0.06);
+}
+
+.chip-icon {
+    font-size: 16px;
+    height: 16px;
+    width: 16px;
+}
+
+.chip--verified {
+    background: rgba(0, 0, 0, 0.06);
+}
+
+.chip--warning {
+    background: rgba(0, 0, 0, 0.10);
+}
+
+.chip--failed {
+    background: rgba(0, 0, 0, 0.14);
+}
+
+.chip--pending {
+    background: rgba(0, 0, 0, 0.08);
+}

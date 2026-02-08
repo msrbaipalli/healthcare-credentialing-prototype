@@ -1,0 +1,54 @@
+<mat-card class="head">
+    <div>
+        <div class="h1">Policy Engine</div>
+        <div class="muted">Rules that govern auto-approval vs manual review (mock).</div>
+    </div>
+</mat-card>
+
+<div class="grid">
+    <mat-card class="rule" *ngFor="let r of rulesSig()">
+        <div class="row">
+            <div>
+                <div class="title">{{ r.name }}</div>
+                <div class="muted">Required sources: {{ r.requiredSources.join(', ') }}</div>
+            </div>
+
+            <div class="toggles">
+                <mat-slide-toggle [checked]="r.enabled" (change)="toggleEnabled(r)">Enabled</mat-slide-toggle>
+                <mat-slide-toggle [checked]="r.autoApprove"
+                    (change)="toggleAutoApprove(r)">Auto-approve</mat-slide-toggle>
+            </div>
+        </div>
+
+        <div class="controls">
+            <mat-card class="mini">
+                <div class="mini-title">Max risk score</div>
+                <div class="mini-row">
+                    <input matInput type="number" [value]="r.riskMax" min="0" max="100"
+                        (input)="updateRiskMax(r, $any($event.target).value)" />
+                    <span class="badge">0–100</span>
+                </div>
+            </mat-card>
+
+            <mat-card class="mini">
+                <div class="mini-title">Failure behavior</div>
+                <div class="mini-row">
+                    <mat-slide-toggle [checked]="r.ifAnyFailsRequireManualReview" (change)="toggleFailBehavior(r)">
+                        Manual review if any check fails
+                    </mat-slide-toggle>
+                </div>
+            </mat-card>
+        </div>
+
+        <div class="actions">
+            <button mat-stroked-button>
+                <mat-icon>science</mat-icon>
+                Simulate
+            </button>
+            <button mat-flat-button>
+                <mat-icon>save</mat-icon>
+                Save Policy
+            </button>
+        </div>
+    </mat-card>
+</div>

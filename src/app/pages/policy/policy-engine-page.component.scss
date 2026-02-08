@@ -1,0 +1,92 @@
+.head {
+    padding: 14px;
+    border-radius: 16px;
+    margin-bottom: 14px;
+}
+
+.h1 {
+    font-size: 18px;
+    font-weight: 900;
+}
+
+.muted {
+    font-size: 12px;
+    opacity: 0.8;
+}
+
+.grid {
+    display: grid;
+    gap: 14px;
+}
+
+.rule {
+    padding: 14px;
+    border-radius: 16px;
+}
+
+.row {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: flex-start;
+    flex-wrap: wrap;
+}
+
+.title {
+    font-weight: 900;
+}
+
+.toggles {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.controls {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 12px;
+}
+
+.mini {
+    padding: 12px;
+    border-radius: 14px;
+}
+
+.mini-title {
+    font-weight: 900;
+    font-size: 12px;
+    opacity: 0.85;
+    margin-bottom: 8px;
+}
+
+.mini-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.badge {
+    font-size: 12px;
+    opacity: 0.75;
+    font-weight: 900;
+    background: rgba(0, 0, 0, 0.06);
+    padding: 4px 10px;
+    border-radius: 999px;
+}
+
+.actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 12px;
+    flex-wrap: wrap;
+}
+
+@media (max-width: 900px) {
+    .controls {
+        grid-template-columns: 1fr;
+    }
+}

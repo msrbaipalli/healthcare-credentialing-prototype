@@ -1,0 +1,55 @@
+<mat-card class="head">
+    <div>
+        <div class="h1">Integrations</div>
+        <div class="muted">Health checks for external sources used by the verification engine.</div>
+    </div>
+</mat-card>
+
+<div class="grid">
+    <mat-card class="card" *ngFor="let c of connectorsSig()">
+        <div class="row">
+            <div class="left">
+                <div class="title">{{ c.name }}</div>
+                <div class="muted">{{ c.description }}</div>
+            </div>
+
+            <span [class]="chipClass(c.status)">
+                <mat-icon class="chip-icon">{{ statusIcon(c.status) }}</mat-icon>
+                {{ c.status | uppercase }}
+            </span>
+        </div>
+
+        <mat-divider></mat-divider>
+
+        <div class="meta">
+            <div class="meta-item">
+                <div class="meta-label">Last check</div>
+                <div class="meta-value">{{ c.lastCheckAt | date:'MMM d, y · h:mm a' }}</div>
+            </div>
+            <div class="meta-item">
+                <div class="meta-label">Latency</div>
+                <div class="meta-value">{{ c.latencyMs }} ms</div>
+            </div>
+            <div class="meta-item">
+                <div class="meta-label">Uptime</div>
+                <div class="meta-value">{{ c.uptimePct }}%</div>
+            </div>
+        </div>
+
+        <div class="notes">
+            <mat-icon>notes</mat-icon>
+            <div class="muted">{{ c.notes }}</div>
+        </div>
+
+        <div class="actions">
+            <button mat-stroked-button (click)="ping(c.id)">
+                <mat-icon>network_ping</mat-icon>
+                Ping
+            </button>
+            <button mat-flat-button>
+                <mat-icon>settings</mat-icon>
+                Configure
+            </button>
+        </div>
+    </mat-card>
+</div>
