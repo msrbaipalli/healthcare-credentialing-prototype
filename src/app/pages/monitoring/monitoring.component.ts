@@ -25,8 +25,8 @@ import { CredentialingMockService, AlertItem, Severity, Provider } from '../serv
         MatInputModule,
         MatDividerModule,
     ],
-    templateUrl: './monitoring-page.component.html',
-    styleUrl: './monitoring-page.component.scss',
+    templateUrl: './monitoring.component.html',
+    styleUrl: './monitoring.component.scss',
 })
 export class MonitoringPageComponent {
     constructor(public mock: CredentialingMockService) { }

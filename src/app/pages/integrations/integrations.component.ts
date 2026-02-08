@@ -12,8 +12,8 @@ import { CredentialingMockService, Connector, ConnectorStatus } from '../service
     standalone: true,
     selector: 'app-integrations-page',
     imports: [CommonModule, DatePipe, MatCardModule, MatIconModule, MatButtonModule, MatDividerModule],
-    templateUrl: './integrations-page.component.html',
-    styleUrl: './integrations-page.component.scss',
+    templateUrl: './integrations.component.html',
+    styleUrl: './integrations.component.scss',
 })
 export class IntegrationsPageComponent {
     constructor(public mock: CredentialingMockService) { }
