@@ -10,6 +10,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatDividerModule } from '@angular/material/divider';
 
 import { CredentialingMockService, AlertItem, Severity, Provider } from '../services/credentialing-mock.service';
+import { Router } from '@angular/router';
 
 @Component({
     standalone: true,
@@ -29,7 +30,7 @@ import { CredentialingMockService, AlertItem, Severity, Provider } from '../serv
     styleUrl: './monitoring.component.scss',
 })
 export class MonitoringPageComponent {
-    constructor(public mock: CredentialingMockService) { }
+    constructor(public mock: CredentialingMockService, private router: Router) { }
 
     query = new FormControl('', { nonNullable: true });
 
@@ -75,5 +76,9 @@ export class MonitoringPageComponent {
     resolve(id: string) {
         this.mock.setAlertStatus(id, 'resolved');
         this.alertsSig.set(this.mock.listAlerts());
+    }
+
+    openProfile(providerId: string) {
+        this.router.navigate(['/provider', providerId]);
     }
 }

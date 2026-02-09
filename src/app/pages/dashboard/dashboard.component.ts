@@ -123,4 +123,8 @@ export class DashboardPageComponent {
         this.mock.mockRequestMoreInfo(p.id);
         this.providersSig.set(this.mock.listProviders());
     }
+
+    openProfile(p: Provider) {
+        this.router.navigate(['/provider', p.id]);
+    }
 }

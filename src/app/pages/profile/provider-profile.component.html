@@ -1,0 +1,173 @@
+<ng-container *ngIf="provider() as p; else notFound">
+    <mat-card class="head">
+        <div class="left">
+            <div class="crumbs">
+                <a routerLink="/" class="crumb">Dashboard</a>
+                <span class="sep">/</span>
+                <span class="crumb-current">Provider</span>
+            </div>
+
+            <div class="title-row">
+                <div class="h1">{{ p.fullName }}</div>
+
+                <span [class]="statusChipClass(p.status)">
+                    <mat-icon class="chip-icon">{{ statusIcon(p.status) }}</mat-icon>
+                    {{ statusLabel(p.status) }}
+                </span>
+            </div>
+
+            <div class="muted">
+                NPI {{ p.npi }} · {{ p.specialty }} · {{ p.organization }} · {{ p.state }}
+            </div>
+
+            <div class="meta">
+                <div class="meta-item">
+                    <div class="meta-label">Last verified</div>
+                    <div class="meta-value">{{ p.lastVerifiedAt | date:'MMM d, y · h:mm a' }}</div>
+                </div>
+
+                <div class="meta-item">
+                    <div class="meta-label">Risk score</div>
+                    <div class="risk">
+                        <mat-progress-bar mode="determinate" [value]="p.riskScore"></mat-progress-bar>
+                        <div class="risk-score">{{ p.riskScore }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="actions">
+            <button mat-stroked-button (click)="syncSelected()">
+                <mat-icon>sync</mat-icon>
+                Sync Selection
+            </button>
+
+            <button mat-stroked-button (click)="requestMoreInfo()">
+                <mat-icon>mark_email_unread</mat-icon>
+                Request Info
+            </button>
+
+            <button mat-flat-button (click)="approve()">
+                <mat-icon>check_circle</mat-icon>
+                Approve
+            </button>
+        </div>
+    </mat-card>
+
+    <div class="grid">
+        <!-- Identity & Snapshot -->
+        <mat-card class="panel">
+            <div class="panel-title">Provider Snapshot</div>
+            <div class="snapshot">
+                <div class="snap-row">
+                    <div class="snap-label">Provider ID</div>
+                    <div class="snap-value mono">{{ p.id }}</div>
+                </div>
+                <div class="snap-row">
+                    <div class="snap-label">Organization</div>
+                    <div class="snap-value">{{ p.organization }}</div>
+                </div>
+                <div class="snap-row">
+                    <div class="snap-label">Specialty</div>
+                    <div class="snap-value">{{ p.specialty }}</div>
+                </div>
+                <div class="snap-row">
+                    <div class="snap-label">State</div>
+                    <div class="snap-value">{{ p.state }}</div>
+                </div>
+            </div>
+
+            <mat-divider></mat-divider>
+
+            <div class="callout">
+                <mat-icon>psychology</mat-icon>
+                <div>
+                    <div class="callout-title">AI explanation (mock)</div>
+                    <div class="muted">
+                        Risk score is computed from source consistency, recency, and exception signals.
+                    </div>
+                </div>
+            </div>
+        </mat-card>
+
+        <!-- Verification checks -->
+        <mat-card class="panel">
+            <div class="panel-title">Real-time Verification Checks</div>
+            <mat-card class="inner" *ngFor="let c of checks()">
+                <div class="row">
+                    <div>
+                        <div class="item-title">{{ c.name }}</div>
+                        <div class="muted">{{ c.source }} · {{ c.checkedAt | date:'h:mm a' }}</div>
+                    </div>
+
+                    <span [class]="statusChipClass(c.status)">
+                        <mat-icon class="chip-icon">{{ statusIcon(c.status) }}</mat-icon>
+                        {{ statusLabel(c.status) }}
+                    </span>
+                </div>
+
+                <div class="detail">{{ c.details }}</div>
+            </mat-card>
+        </mat-card>
+
+        <!-- Ledger -->
+        <mat-card class="panel">
+            <div class="panel-title">Blockchain Audit Ledger</div>
+            <mat-card class="inner ledger" *ngFor="let e of ledger()">
+                <div class="row">
+                    <div>
+                        <div class="item-title">{{ e.action }}</div>
+                        <div class="muted">{{ e.timestamp | date:'MMM d, y · h:mm a' }} · {{ e.actor }}</div>
+                    </div>
+                    <div class="mono hash">{{ e.txHash }}</div>
+                </div>
+                <div class="detail">{{ e.summary }}</div>
+            </mat-card>
+        </mat-card>
+
+        <!-- Evidence -->
+        <mat-card class="panel">
+            <div class="panel-title">Evidence Bundle Preview</div>
+            <div class="muted">Checks + ledger anchors compiled into an audit-ready record (mock).</div>
+
+            <mat-card class="inner evidence" *ngFor="let ev of evidence().slice(0, 6)">
+                <div class="row">
+                    <div>
+                        <div class="item-title">{{ ev.title }}</div>
+                        <div class="muted">{{ ev.category | uppercase }} · {{ ev.source }} · {{ ev.timestamp | date:'MMM
+                            d, y · h:mm a' }}</div>
+                    </div>
+
+                    <span [class]="statusChipClass(ev.status)">
+                        <mat-icon class="chip-icon">{{ statusIcon(ev.status) }}</mat-icon>
+                        {{ statusLabel(ev.status) }}
+                    </span>
+                </div>
+                <div class="detail">{{ ev.summary }}</div>
+            </mat-card>
+
+            <div class="footer-actions">
+                <button mat-stroked-button routerLink="/evidence">
+                    <mat-icon>folder</mat-icon>
+                    Open Evidence Export
+                </button>
+                <button mat-flat-button>
+                    <mat-icon>download</mat-icon>
+                    Export Bundle
+                </button>
+            </div>
+        </mat-card>
+    </div>
+</ng-container>
+
+<ng-template #notFound>
+    <mat-card class="panel notfound">
+        <mat-icon>person_off</mat-icon>
+        <div class="h1">Provider not found</div>
+        <div class="muted">That provider ID does not exist in the mock dataset.</div>
+        <button mat-flat-button routerLink="/">
+            <mat-icon>arrow_back</mat-icon>
+            Back to Dashboard
+        </button>
+    </mat-card>
+</ng-template>
