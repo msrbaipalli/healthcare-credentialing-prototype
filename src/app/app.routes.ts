@@ -11,6 +11,7 @@ export const APP_ROUTES: Routes = [
     { path: 'integrations', component: IntegrationsPageComponent },
     { path: 'policy', component: PolicyEnginePageComponent },
     { path: 'evidence', component: EvidenceExportPageComponent },
-    { path: 'provider/:id', component: ProviderProfilePageComponent },
+    { path: 'provider/:id', component: ProviderProfileComponent },
+    { path: 'provider/npi/:npi', component: ProviderByNpiRedirectComponent },
     { path: '**', redirectTo: '' },
 ];

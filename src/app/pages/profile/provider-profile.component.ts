@@ -1,6 +1,6 @@
 import { Component, computed, signal } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
-import { ActivatedRoute, RouterModule } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
@@ -16,6 +16,8 @@ import {
     LedgerEntry,
     EvidenceItem,
 } from '../services/credentialing-mock.service';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { map } from 'rxjs';
 
 @Component({
     standalone: true,
@@ -34,11 +36,16 @@ import {
     styleUrl: './provider-profile.component.scss',
 })
 export class ProviderProfilePageComponent {
-    constructor(private route: ActivatedRoute, public mock: CredentialingMockService) { }
+    constructor(private route: ActivatedRoute, private router: Router, public mock: CredentialingMockService) { }
+
+    private idSig = toSignal(
+        this.route.paramMap.pipe(map(pm => pm.get('id') ?? '')),
+        { initialValue: this.route.snapshot.paramMap.get('id') ?? '' }
+    );
 
     providersSig = signal<Provider[]>(this.mock.listProviders());
 
-    providerId = computed(() => this.route.snapshot.paramMap.get('id') ?? '');
+    providerId = computed(() => this.idSig());
 
     provider = computed<Provider | null>(() => {
         const id = this.providerId();
@@ -58,6 +65,17 @@ export class ProviderProfilePageComponent {
     evidence = computed<EvidenceItem[]>(() => {
         const p = this.provider();
         return p ? this.mock.getEvidenceForProvider(p.id) : [];
+    });
+
+    index = computed(() => {
+        const id = this.providerId();
+        return this.providersSig().findIndex(p => p.id === id);
+    });
+
+    hasPrev = computed(() => this.index() > 0);
+    hasNext = computed(() => {
+        const i = this.index();
+        return i >= 0 && i < this.providersSig().length - 1;
     });
 
     statusLabel(s: VerificationStatus) {
@@ -101,5 +119,19 @@ export class ProviderProfilePageComponent {
         const p = this.provider();
         if (!p) return;
         this.mock.selectProviderById(p.id);
+    }
+
+    prevProvider() {
+        const i = this.index();
+        if (i <= 0) return;
+        const prev = this.providersSig()[i - 1];
+        this.router.navigate(['/provider', prev.id]);
+    }
+
+    nextProvider() {
+        const i = this.index();
+        if (i < 0 || i >= this.providersSig().length - 1) return;
+        const next = this.providersSig()[i + 1];
+        this.router.navigate(['/provider', next.id]);
     }
 }

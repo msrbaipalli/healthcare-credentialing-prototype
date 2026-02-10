@@ -37,6 +37,16 @@
         </div>
 
         <div class="actions">
+            <button mat-stroked-button (click)="prevProvider()" [disabled]="!hasPrev()">
+                <mat-icon>chevron_left</mat-icon>
+                Prev
+            </button>
+
+            <button mat-stroked-button (click)="nextProvider()" [disabled]="!hasNext()">
+                Next
+                <mat-icon>chevron_right</mat-icon>
+            </button>
+
             <button mat-stroked-button (click)="syncSelected()">
                 <mat-icon>sync</mat-icon>
                 Sync Selection
