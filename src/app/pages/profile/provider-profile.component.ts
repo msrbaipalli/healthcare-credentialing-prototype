@@ -7,6 +7,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatTabsModule } from '@angular/material/tabs';
 
 import {
     CredentialingMockService,
@@ -31,6 +32,7 @@ import { map } from 'rxjs';
         MatButtonModule,
         MatDividerModule,
         MatProgressBarModule,
+        MatTabsModule,
     ],
     templateUrl: './provider-profile.component.html',
     styleUrl: './provider-profile.component.scss',
@@ -42,6 +44,27 @@ export class ProviderProfilePageComponent {
         this.route.paramMap.pipe(map(pm => pm.get('id') ?? '')),
         { initialValue: this.route.snapshot.paramMap.get('id') ?? '' }
     );
+
+    private tabSig = toSignal(
+        this.route.queryParamMap.pipe(map(q => (q.get('tab') ?? 'overview').toLowerCase())),
+        { initialValue: (this.route.snapshot.queryParamMap.get('tab') ?? 'overview').toLowerCase() }
+    );
+
+    tab = computed(() => {
+        const t = this.tabSig();
+        const allowed = new Set(['overview', 'checks', 'ledger', 'evidence']);
+        return allowed.has(t) ? t : 'overview';
+    });
+
+    tabIndex = computed(() => {
+        switch (this.tab()) {
+            case 'overview': return 0;
+            case 'checks': return 1;
+            case 'ledger': return 2;
+            case 'evidence': return 3;
+            default: return 0;
+        }
+    });
 
     providersSig = signal<Provider[]>(this.mock.listProviders());
 
@@ -77,6 +100,22 @@ export class ProviderProfilePageComponent {
         const i = this.index();
         return i >= 0 && i < this.providersSig().length - 1;
     });
+
+
+    setTabFromIndex(index: number) {
+        const tab =
+            index === 0 ? 'overview' :
+                index === 1 ? 'checks' :
+                    index === 2 ? 'ledger' :
+                        'evidence';
+
+        // Update query param without losing others
+        this.router.navigate([], {
+            relativeTo: this.route,
+            queryParams: { tab },
+            queryParamsHandling: 'merge',
+        });
+    }
 
     statusLabel(s: VerificationStatus) {
         switch (s) {

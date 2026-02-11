@@ -219,6 +219,22 @@
     background: rgba(0, 0, 0, 0.08);
 }
 
+.tabs-shell {
+    padding: 0;
+    border-radius: 16px;
+    overflow: hidden;
+}
+
+.tab-pad {
+    padding: 14px;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+}
+
 @media (max-width: 1100px) {
     .grid {
         grid-template-columns: 1fr;
