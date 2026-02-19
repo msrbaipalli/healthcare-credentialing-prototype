@@ -7,7 +7,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatInputModule } from '@angular/material/input';
 
-import { CredentialingMockService, PolicyRule } from '../services/credentialing-mock.service';
+import { CredentialingMockService, PolicyRule } from '../../services/credentialing-mock.service';
 
 @Component({
     standalone: true,

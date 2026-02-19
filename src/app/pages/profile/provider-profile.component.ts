@@ -9,6 +9,10 @@ import { MatDividerModule } from '@angular/material/divider';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatTabsModule } from '@angular/material/tabs';
 
+import { Clipboard } from '@angular/cdk/clipboard';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { map } from 'rxjs/operators';
+
 import {
     CredentialingMockService,
     Provider,
@@ -16,13 +20,11 @@ import {
     VerificationCheck,
     LedgerEntry,
     EvidenceItem,
-} from '../services/credentialing-mock.service';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { map } from 'rxjs';
+} from '../../services/credentialing-mock.service';
 
 @Component({
     standalone: true,
-    selector: 'app-provider-profile',
+    selector: 'app-provider-profile-page',
     imports: [
         CommonModule,
         DatePipe,
@@ -38,7 +40,16 @@ import { map } from 'rxjs';
     styleUrl: './provider-profile.component.scss',
 })
 export class ProviderProfilePageComponent {
-    constructor(private route: ActivatedRoute, private router: Router, public mock: CredentialingMockService) { }
+    constructor(
+        private route: ActivatedRoute,
+        private router: Router,
+        public mock: CredentialingMockService,
+        private clipboard: Clipboard
+    ) { }
+
+    toastSig = signal('');
+
+    providersSig = signal<Provider[]>(this.mock.listProviders());
 
     private idSig = toSignal(
         this.route.paramMap.pipe(map(pm => pm.get('id') ?? '')),
@@ -49,6 +60,8 @@ export class ProviderProfilePageComponent {
         this.route.queryParamMap.pipe(map(q => (q.get('tab') ?? 'overview').toLowerCase())),
         { initialValue: (this.route.snapshot.queryParamMap.get('tab') ?? 'overview').toLowerCase() }
     );
+
+    providerId = computed(() => this.idSig());
 
     tab = computed(() => {
         const t = this.tabSig();
@@ -66,9 +79,19 @@ export class ProviderProfilePageComponent {
         }
     });
 
-    providersSig = signal<Provider[]>(this.mock.listProviders());
+    setTabFromIndex(index: number) {
+        const tab =
+            index === 0 ? 'overview' :
+                index === 1 ? 'checks' :
+                    index === 2 ? 'ledger' :
+                        'evidence';
 
-    providerId = computed(() => this.idSig());
+        this.router.navigate([], {
+            relativeTo: this.route,
+            queryParams: { tab },
+            queryParamsHandling: 'merge',
+        });
+    }
 
     provider = computed<Provider | null>(() => {
         const id = this.providerId();
@@ -101,20 +124,25 @@ export class ProviderProfilePageComponent {
         return i >= 0 && i < this.providersSig().length - 1;
     });
 
+    prevProvider() {
+        const i = this.index();
+        if (i <= 0) return;
+        const prev = this.providersSig()[i - 1];
+        this.router.navigate(['/provider', prev.id], { queryParamsHandling: 'merge' });
+    }
 
-    setTabFromIndex(index: number) {
-        const tab =
-            index === 0 ? 'overview' :
-                index === 1 ? 'checks' :
-                    index === 2 ? 'ledger' :
-                        'evidence';
+    nextProvider() {
+        const i = this.index();
+        if (i < 0 || i >= this.providersSig().length - 1) return;
+        const next = this.providersSig()[i + 1];
+        this.router.navigate(['/provider', next.id], { queryParamsHandling: 'merge' });
+    }
 
-        // Update query param without losing others
-        this.router.navigate([], {
-            relativeTo: this.route,
-            queryParams: { tab },
-            queryParamsHandling: 'merge',
-        });
+    copyDeepLink() {
+        const url = window.location.href; // includes ?tab=
+        this.clipboard.copy(url);
+        this.toastSig.set('Link copied');
+        setTimeout(() => this.toastSig.set(''), 1600);
     }
 
     statusLabel(s: VerificationStatus) {
@@ -153,24 +181,9 @@ export class ProviderProfilePageComponent {
         this.providersSig.set(this.mock.listProviders());
     }
 
-    // Optional: keep global selected provider in sync for other pages
     syncSelected() {
         const p = this.provider();
         if (!p) return;
         this.mock.selectProviderById(p.id);
-    }
-
-    prevProvider() {
-        const i = this.index();
-        if (i <= 0) return;
-        const prev = this.providersSig()[i - 1];
-        this.router.navigate(['/provider', prev.id]);
-    }
-
-    nextProvider() {
-        const i = this.index();
-        if (i < 0 || i >= this.providersSig().length - 1) return;
-        const next = this.providersSig()[i + 1];
-        this.router.navigate(['/provider', next.id]);
     }
 }

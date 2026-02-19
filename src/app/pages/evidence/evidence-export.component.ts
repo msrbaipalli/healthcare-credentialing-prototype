@@ -8,7 +8,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatSelectModule } from '@angular/material/select';
 import { MatDividerModule } from '@angular/material/divider';
 
-import { CredentialingMockService, Provider, EvidenceItem, VerificationStatus } from '../services/credentialing-mock.service';
+import { CredentialingMockService, Provider, EvidenceItem, VerificationStatus } from '../../services/credentialing-mock.service';
 
 @Component({
     standalone: true,
@@ -23,8 +23,8 @@ import { CredentialingMockService, Provider, EvidenceItem, VerificationStatus } 
         MatSelectModule,
         MatDividerModule,
     ],
-    templateUrl: './evidence-exportcomponent.html',
-    styleUrl: './evidence-exportcomponent.scss',
+    templateUrl: './evidence-export.component.html',
+    styleUrl: './evidence-export.component.scss',
 })
 export class EvidenceExportPageComponent {
     constructor(public mock: CredentialingMockService) { }

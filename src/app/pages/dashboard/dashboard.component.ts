@@ -1,24 +1,18 @@
 import { Component, computed, signal } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
-import { MatChipsModule } from '@angular/material/chips';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatTableModule } from '@angular/material/table';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
-import {
-    CredentialingMockService,
-    Provider,
-    VerificationStatus,
-    VerificationCheck,
-    LedgerEntry,
-} from '../../services/credentialing-mock.service';
+import { CredentialingMockService, Provider, VerificationStatus, VerificationCheck, LedgerEntry } from '../../services/credentialing-mock.service';
 
 @Component({
     standalone: true,
@@ -30,7 +24,6 @@ import {
         MatCardModule,
         MatIconModule,
         MatInputModule,
-        MatChipsModule,
         MatButtonModule,
         MatDividerModule,
         MatTableModule,
@@ -41,9 +34,10 @@ import {
     styleUrl: './dashboardcomponent.scss',
 })
 export class DashboardPageComponent {
-    constructor(public mock: CredentialingMockService) { }
+    constructor(public mock: CredentialingMockService, private router: Router) { }
 
     query = new FormControl('', { nonNullable: true });
+
     providersSig = signal<Provider[]>(this.mock.listProviders());
     selectedSig = signal<Provider | null>(this.providersSig()[0] ?? null);
 
@@ -56,9 +50,7 @@ export class DashboardPageComponent {
         const list = this.providersSig();
         if (!q) return list;
         return list.filter(p =>
-            [p.fullName, p.npi, p.specialty, p.organization, p.state].some(v =>
-                v.toLowerCase().includes(q)
-            )
+            [p.fullName, p.npi, p.specialty, p.organization, p.state].some(v => v.toLowerCase().includes(q))
         );
     });
 
@@ -110,6 +102,10 @@ export class DashboardPageComponent {
         this.mock.selectProviderById(p.id);
     }
 
+    openProfile(p: Provider) {
+        this.router.navigate(['/provider', p.id], { queryParams: { tab: 'overview' } });
+    }
+
     approve() {
         const p = this.selectedSig();
         if (!p) return;
@@ -122,9 +118,5 @@ export class DashboardPageComponent {
         if (!p) return;
         this.mock.mockRequestMoreInfo(p.id);
         this.providersSig.set(this.mock.listProviders());
-    }
-
-    openProfile(p: Provider) {
-        this.router.navigate(['/provider', p.id]);
     }
 }

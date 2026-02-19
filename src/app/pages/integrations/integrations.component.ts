@@ -6,7 +6,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDividerModule } from '@angular/material/divider';
 
-import { CredentialingMockService, Connector, ConnectorStatus } from '../services/credentialing-mock.service';
+import { CredentialingMockService, Connector, ConnectorStatus } from '../../services/credentialing-mock.service';
 
 @Component({
     standalone: true,

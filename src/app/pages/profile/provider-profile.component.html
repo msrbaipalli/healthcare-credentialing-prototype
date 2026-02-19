@@ -47,6 +47,11 @@
                 <mat-icon>chevron_right</mat-icon>
             </button>
 
+            <button mat-stroked-button (click)="copyDeepLink()">
+                <mat-icon>link</mat-icon>
+                Copy Link
+            </button>
+
             <button mat-stroked-button (click)="syncSelected()">
                 <mat-icon>sync</mat-icon>
                 Sync Selection
@@ -70,7 +75,6 @@
             <mat-tab label="Overview">
                 <div class="tab-pad">
                     <div class="grid">
-                        <!-- Snapshot -->
                         <mat-card class="panel">
                             <div class="panel-title">Provider Snapshot</div>
                             <div class="snapshot">
@@ -105,7 +109,6 @@
                             </div>
                         </mat-card>
 
-                        <!-- Quick peek -->
                         <mat-card class="panel">
                             <div class="panel-title">Quick Peek</div>
                             <div class="muted">Recent check + latest ledger anchor.</div>
@@ -144,6 +147,10 @@
                                 <button mat-stroked-button (click)="setTabFromIndex(2)">
                                     <mat-icon>receipt_long</mat-icon>
                                     Go to Ledger
+                                </button>
+                                <button mat-stroked-button (click)="setTabFromIndex(3)">
+                                    <mat-icon>folder</mat-icon>
+                                    Go to Evidence
                                 </button>
                             </div>
                         </mat-card>
@@ -235,6 +242,8 @@
 
         </mat-tab-group>
     </mat-card>
+
+    <div class="toast" *ngIf="toastSig()">{{ toastSig() }}</div>
 </ng-container>
 
 <ng-template #notFound>

@@ -197,12 +197,12 @@ export class CredentialingMockService {
         {
             id: 'a-1',
             providerId: 'p-1001',
-            title: 'DEA renewal window approaching',
+            title: 'Enrollment revalidation due soon',
             severity: 'medium',
-            source: 'DEA',
+            source: 'PECOS',
             createdAt: new Date(Date.now() - 1000 * 60 * 18).toISOString(),
-            details: 'Registration nearing expiry. Verify renewal submission.',
-            recommendedAction: 'Request updated DEA certificate or renewal receipt.',
+            details: 'Enrollment active, but revalidation window flagged.',
+            recommendedAction: 'Request updated PECOS revalidation confirmation.',
             status: 'open',
         },
         {
@@ -223,8 +223,8 @@ export class CredentialingMockService {
             severity: 'low',
             source: 'PECOS',
             createdAt: new Date(Date.now() - 1000 * 60 * 8).toISOString(),
-            details: 'External enrollment check awaiting response.',
-            recommendedAction: 'Wait or rerun verification when connector is healthy.',
+            details: 'External enrollment check awaiting response (connector degraded).',
+            recommendedAction: 'Retry when connector returns to healthy.',
             status: 'acknowledged',
         },
     ];
@@ -239,32 +239,32 @@ export class CredentialingMockService {
     }
 
     getVerificationChecks(providerId: string): VerificationCheck[] {
-        const base = [
+        const base: VerificationCheck[] = [
             {
                 name: 'NPI Registry Match',
                 source: 'NPPES',
-                status: 'verified' as VerificationStatus,
+                status: 'verified',
                 details: 'Name and NPI match. Practice location verified.',
                 checkedAt: new Date(Date.now() - 1000 * 60 * 8).toISOString(),
             },
             {
                 name: 'License Status',
                 source: 'State Medical Board',
-                status: 'verified' as VerificationStatus,
+                status: 'verified',
                 details: 'Active license found. No disciplinary actions detected.',
                 checkedAt: new Date(Date.now() - 1000 * 60 * 12).toISOString(),
             },
             {
                 name: 'Sanctions Screening',
                 source: 'OIG/LEIE',
-                status: 'verified' as VerificationStatus,
+                status: 'verified',
                 details: 'No matches found.',
                 checkedAt: new Date(Date.now() - 1000 * 60 * 15).toISOString(),
             },
             {
                 name: 'Enrollment Validation',
                 source: 'PECOS',
-                status: 'pending' as VerificationStatus,
+                status: 'pending',
                 details: 'Awaiting confirmation from external service.',
                 checkedAt: new Date(Date.now() - 1000 * 60 * 3).toISOString(),
             },
@@ -324,7 +324,6 @@ export class CredentialingMockService {
         ];
     }
 
-    // Monitoring / Alerts
     listAlerts() {
         return [...this.alerts].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
     }
@@ -333,7 +332,6 @@ export class CredentialingMockService {
         this.alerts = this.alerts.map(a => (a.id === id ? { ...a, status } : a));
     }
 
-    // Integrations
     listConnectors() {
         return [...this.connectors];
     }
@@ -364,7 +362,6 @@ export class CredentialingMockService {
         });
     }
 
-    // Policy Engine
     listPolicyRules() {
         return [...this.policyRules];
     }
@@ -373,12 +370,11 @@ export class CredentialingMockService {
         this.policyRules = this.policyRules.map(r => (r.id === patch.id ? { ...r, ...patch } : r));
     }
 
-    // Evidence bundle
     getEvidenceForProvider(providerId: string): EvidenceItem[] {
         const now = Date.now();
         const checks = this.getVerificationChecks(providerId);
 
-        const mapToEvidence = checks.map((c, i) => ({
+        const mapToEvidence: EvidenceItem[] = checks.map((c, i) => ({
             id: `${providerId}-e-${i + 1}`,
             category:
                 c.source === 'NPPES' ? 'identity' :
@@ -390,7 +386,7 @@ export class CredentialingMockService {
             timestamp: c.checkedAt,
             status: c.status,
             summary: c.details,
-        } satisfies EvidenceItem));
+        }));
 
         const ledger = this.getLedger(providerId).map((l, i) => ({
             id: `${providerId}-audit-${i + 1}`,
@@ -402,7 +398,6 @@ export class CredentialingMockService {
             summary: `${l.summary} (${l.txHash})`,
         }));
 
-        // Add a “bundle generated” item
         const bundle: EvidenceItem = {
             id: `${providerId}-bundle`,
             category: 'audit',
@@ -416,7 +411,6 @@ export class CredentialingMockService {
         return [...mapToEvidence, ...ledger, bundle].sort((a, b) => b.timestamp.localeCompare(a.timestamp));
     }
 
-    // Existing actions
     mockApprove(providerId: string) {
         this.providers = this.providers.map(p =>
             p.id === providerId ? { ...p, status: 'verified', riskScore: Math.min(p.riskScore, 25) } : p

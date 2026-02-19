@@ -1,16 +1,15 @@
 import { Component, computed, signal } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
-import { MatChipsModule } from '@angular/material/chips';
 import { MatButtonModule } from '@angular/material/button';
 import { MatInputModule } from '@angular/material/input';
 import { MatDividerModule } from '@angular/material/divider';
 
-import { CredentialingMockService, AlertItem, Severity, Provider } from '../services/credentialing-mock.service';
-import { Router } from '@angular/router';
+import { CredentialingMockService, AlertItem, Severity, Provider } from '../../services/credentialing-mock.service';
 
 @Component({
     standalone: true,
@@ -21,7 +20,6 @@ import { Router } from '@angular/router';
         ReactiveFormsModule,
         MatCardModule,
         MatIconModule,
-        MatChipsModule,
         MatButtonModule,
         MatInputModule,
         MatDividerModule,
@@ -64,8 +62,8 @@ export class MonitoringPageComponent {
         return this.providersSig().find(p => p.id === providerId)?.fullName ?? providerId;
     }
 
-    selectProvider(providerId: string) {
-        this.mock.selectProviderById(providerId);
+    openProfile(providerId: string) {
+        this.router.navigate(['/provider', providerId], { queryParams: { tab: 'overview' } });
     }
 
     ack(id: string) {
@@ -76,9 +74,5 @@ export class MonitoringPageComponent {
     resolve(id: string) {
         this.mock.setAlertStatus(id, 'resolved');
         this.alertsSig.set(this.mock.listAlerts());
-    }
-
-    openProfile(providerId: string) {
-        this.router.navigate(['/provider', providerId]);
     }
 }
