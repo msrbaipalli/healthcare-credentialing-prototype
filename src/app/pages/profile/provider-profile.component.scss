@@ -162,11 +162,23 @@
 
 .item-title {
     font-weight: 900;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
 }
 
 .detail {
     margin-top: 8px;
     opacity: 0.92;
+}
+
+.mini-icon {
+    font-size: 18px;
+    height: 18px;
+    width: 18px;
+    opacity: 0.85;
+    vertical-align: middle;
 }
 
 .ledger {
@@ -231,6 +243,33 @@
 
 .chip--pending {
     background: rgba(0, 0, 0, 0.08);
+}
+
+.note-add {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+    padding: 10px 12px;
+    border-radius: 14px;
+    background: rgba(0, 0, 0, 0.04);
+    margin-top: 10px;
+}
+
+.note-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 999px;
+    display: inline-block;
+    background: rgba(0, 0, 0, 0.20);
+}
+
+.note-dot--open {
+    background: rgba(0, 0, 0, 0.28);
+}
+
+.note-dot--done {
+    background: rgba(0, 0, 0, 0.14);
 }
 
 .toast {

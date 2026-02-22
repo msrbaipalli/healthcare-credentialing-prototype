@@ -8,10 +8,12 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatTabsModule } from '@angular/material/tabs';
+import { MatInputModule } from '@angular/material/input';
 
 import { Clipboard } from '@angular/cdk/clipboard';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs/operators';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
 
 import {
     CredentialingMockService,
@@ -20,7 +22,20 @@ import {
     VerificationCheck,
     LedgerEntry,
     EvidenceItem,
+    AlertItem,
+    ProviderNote,
 } from '../../services/credentialing-mock.service';
+
+type TimelineType = 'alert' | 'check' | 'ledger';
+
+interface TimelineItem {
+    type: TimelineType;
+    title: string;
+    timestamp: string; // ISO
+    subtitle: string;
+    status?: VerificationStatus;
+    alertSeverity?: string;
+}
 
 @Component({
     standalone: true,
@@ -29,12 +44,14 @@ import {
         CommonModule,
         DatePipe,
         RouterModule,
+        ReactiveFormsModule,
         MatCardModule,
         MatIconModule,
         MatButtonModule,
         MatDividerModule,
         MatProgressBarModule,
         MatTabsModule,
+        MatInputModule,
     ],
     templateUrl: './provider-profile.component.html',
     styleUrl: './provider-profile.component.scss',
@@ -65,7 +82,7 @@ export class ProviderProfilePageComponent {
 
     tab = computed(() => {
         const t = this.tabSig();
-        const allowed = new Set(['overview', 'checks', 'ledger', 'evidence']);
+        const allowed = new Set(['overview', 'checks', 'ledger', 'evidence', 'timeline', 'notes']);
         return allowed.has(t) ? t : 'overview';
     });
 
@@ -75,6 +92,8 @@ export class ProviderProfilePageComponent {
             case 'checks': return 1;
             case 'ledger': return 2;
             case 'evidence': return 3;
+            case 'timeline': return 4;
+            case 'notes': return 5;
             default: return 0;
         }
     });
@@ -84,7 +103,9 @@ export class ProviderProfilePageComponent {
             index === 0 ? 'overview' :
                 index === 1 ? 'checks' :
                     index === 2 ? 'ledger' :
-                        'evidence';
+                        index === 3 ? 'evidence' :
+                            index === 4 ? 'timeline' :
+                                'notes';
 
         this.router.navigate([], {
             relativeTo: this.route,
@@ -112,6 +133,68 @@ export class ProviderProfilePageComponent {
         const p = this.provider();
         return p ? this.mock.getEvidenceForProvider(p.id) : [];
     });
+
+    alerts = computed<AlertItem[]>(() => {
+        const p = this.provider();
+        return p ? this.mock.listAlertsForProvider(p.id) : [];
+    });
+
+    timeline = computed<TimelineItem[]>(() => {
+        const p = this.provider();
+        if (!p) return [];
+
+        const alertItems: TimelineItem[] = this.alerts().map(a => ({
+            type: 'alert',
+            title: a.title,
+            timestamp: a.createdAt,
+            subtitle: `${a.source} · ${a.details} · (${a.status})`,
+            alertSeverity: a.severity,
+        }));
+
+        const checkItems: TimelineItem[] = this.checks().map(c => ({
+            type: 'check',
+            title: c.name,
+            timestamp: c.checkedAt,
+            subtitle: `${c.source} · ${c.details}`,
+            status: c.status,
+        }));
+
+        const ledgerItems: TimelineItem[] = this.ledger().map(l => ({
+            type: 'ledger',
+            title: l.action,
+            timestamp: l.timestamp,
+            subtitle: `${l.actor} · ${l.txHash} · ${l.summary}`,
+        }));
+
+        return [...alertItems, ...checkItems, ...ledgerItems].sort((a, b) => b.timestamp.localeCompare(a.timestamp));
+    });
+
+    timelineIcon(t: TimelineType) {
+        switch (t) {
+            case 'alert': return 'crisis_alert';
+            case 'check': return 'task_alt';
+            case 'ledger': return 'receipt_long';
+        }
+    }
+
+    noteInput = new FormControl('', { nonNullable: true });
+
+    notes = computed<ProviderNote[]>(() => {
+        const p = this.provider();
+        return p ? this.mock.listNotes(p.id) : [];
+    });
+
+    addNote() {
+        const p = this.provider();
+        const text = this.noteInput.value.trim();
+        if (!p || !text) return;
+        this.mock.addNote(p.id, text);
+        this.noteInput.setValue('');
+    }
+
+    toggleNote(id: string) {
+        this.mock.toggleNote(id);
+    }
 
     index = computed(() => {
         const id = this.providerId();

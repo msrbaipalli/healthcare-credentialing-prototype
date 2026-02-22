@@ -152,6 +152,10 @@
                                     <mat-icon>folder</mat-icon>
                                     Go to Evidence
                                 </button>
+                                <button mat-stroked-button (click)="setTabFromIndex(4)">
+                                    <mat-icon>timeline</mat-icon>
+                                    Timeline
+                                </button>
                             </div>
                         </mat-card>
                     </div>
@@ -236,6 +240,74 @@
                                 Export Bundle
                             </button>
                         </div>
+                    </mat-card>
+                </div>
+            </mat-tab>
+
+            <mat-tab label="Timeline">
+                <div class="tab-pad">
+                    <mat-card class="panel">
+                        <div class="panel-title">Unified Activity Timeline</div>
+                        <div class="muted">Alerts, verification checks, and ledger anchors in one chronological feed.
+                        </div>
+
+                        <mat-card class="inner" *ngFor="let t of timeline().slice(0, 14)">
+                            <div class="row">
+                                <div>
+                                    <div class="item-title">
+                                        <mat-icon class="mini-icon">{{ timelineIcon(t.type) }}</mat-icon>
+                                        {{ t.title }}
+                                    </div>
+                                    <div class="muted">{{ t.timestamp | date:'MMM d, y · h:mm a' }}</div>
+                                </div>
+
+                                <ng-container *ngIf="t.status as s">
+                                    <span [class]="statusChipClass(s)">
+                                        <mat-icon class="chip-icon">{{ statusIcon(s) }}</mat-icon>
+                                        {{ statusLabel(s) }}
+                                    </span>
+                                </ng-container>
+                            </div>
+
+                            <div class="detail">{{ t.subtitle }}</div>
+                        </mat-card>
+                    </mat-card>
+                </div>
+            </mat-tab>
+
+            <mat-tab label="Notes">
+                <div class="tab-pad">
+                    <mat-card class="panel">
+                        <div class="panel-title">Internal Notes & Tasks</div>
+                        <div class="muted">Ops-only notes for credentialing workflow (mock).</div>
+
+                        <div class="note-add">
+                            <mat-icon>note_add</mat-icon>
+                            <input matInput [formControl]="noteInput" placeholder="Add a note or task for ops…" />
+                            <button mat-flat-button (click)="addNote()">
+                                <mat-icon>add</mat-icon>
+                                Add
+                            </button>
+                        </div>
+
+                        <mat-card class="inner" *ngFor="let n of notes()">
+                            <div class="row">
+                                <div>
+                                    <div class="item-title">
+                                        <span
+                                            [class]="'note-dot ' + (n.status === 'done' ? 'note-dot--done' : 'note-dot--open')"></span>
+                                        {{ n.text }}
+                                    </div>
+                                    <div class="muted">{{ n.author }} · {{ n.createdAt | date:'MMM d, y · h:mm a' }}
+                                    </div>
+                                </div>
+
+                                <button mat-stroked-button (click)="toggleNote(n.id)">
+                                    <mat-icon>{{ n.status === 'done' ? 'undo' : 'done' }}</mat-icon>
+                                    {{ n.status === 'done' ? 'Reopen' : 'Mark done' }}
+                                </button>
+                            </div>
+                        </mat-card>
                     </mat-card>
                 </div>
             </mat-tab>

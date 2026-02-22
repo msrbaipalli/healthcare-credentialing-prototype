@@ -77,6 +77,15 @@ export interface EvidenceItem {
     summary: string;
 }
 
+export interface ProviderNote {
+    id: string;
+    providerId: string;
+    author: string;
+    createdAt: string; // ISO
+    text: string;
+    status: 'open' | 'done';
+}
+
 @Injectable({ providedIn: 'root' })
 export class CredentialingMockService {
     private providers: Provider[] = [
@@ -229,6 +238,25 @@ export class CredentialingMockService {
         },
     ];
 
+    private notes: ProviderNote[] = [
+        {
+            id: 'n-1',
+            providerId: 'p-1001',
+            author: 'ops:credentialing-team',
+            createdAt: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
+            text: 'Requested updated DEA certificate. Awaiting response.',
+            status: 'open',
+        },
+        {
+            id: 'n-2',
+            providerId: 'p-1003',
+            author: 'ops:credentialing-team',
+            createdAt: new Date(Date.now() - 1000 * 60 * 55).toISOString(),
+            text: 'Confirm license issuer and state selection; data mismatch flagged.',
+            status: 'open',
+        },
+    ];
+
     listProviders() {
         return [...this.providers];
     }
@@ -328,6 +356,10 @@ export class CredentialingMockService {
         return [...this.alerts].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
     }
 
+    listAlertsForProvider(providerId: string) {
+        return this.listAlerts().filter(a => a.providerId === providerId);
+    }
+
     setAlertStatus(id: string, status: AlertItem['status']) {
         this.alerts = this.alerts.map(a => (a.id === id ? { ...a, status } : a));
     }
@@ -377,10 +409,15 @@ export class CredentialingMockService {
         const mapToEvidence: EvidenceItem[] = checks.map((c, i) => ({
             id: `${providerId}-e-${i + 1}`,
             category:
-                c.source === 'NPPES' ? 'identity' :
-                    c.source === 'State Medical Board' ? 'license' :
-                        c.source === 'OIG/LEIE' ? 'sanctions' :
-                            c.source === 'PECOS' ? 'enrollment' : 'audit',
+                c.source === 'NPPES'
+                    ? 'identity'
+                    : c.source === 'State Medical Board'
+                        ? 'license'
+                        : c.source === 'OIG/LEIE'
+                            ? 'sanctions'
+                            : c.source === 'PECOS'
+                                ? 'enrollment'
+                                : 'audit',
             title: `${c.name} Result`,
             source: c.source,
             timestamp: c.checkedAt,
@@ -429,5 +466,29 @@ export class CredentialingMockService {
         if (current?.id === providerId) {
             this.selectedProviderSubject.next(this.providers.find(p => p.id === providerId) ?? current);
         }
+    }
+
+    listNotes(providerId: string) {
+        return [...this.notes]
+            .filter(n => n.providerId === providerId)
+            .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    }
+
+    addNote(providerId: string, text: string) {
+        const note: ProviderNote = {
+            id: `n-${Math.floor(Math.random() * 1e9)}`,
+            providerId,
+            author: 'ops:credentialing-team',
+            createdAt: new Date().toISOString(),
+            text,
+            status: 'open',
+        };
+        this.notes = [note, ...this.notes];
+    }
+
+    toggleNote(id: string) {
+        this.notes = this.notes.map(n =>
+            n.id === id ? { ...n, status: n.status === 'open' ? 'done' : 'open' } : n
+        );
     }
 }
