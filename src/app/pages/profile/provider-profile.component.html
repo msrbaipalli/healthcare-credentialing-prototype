@@ -52,6 +52,16 @@
                 Copy Link
             </button>
 
+            <button mat-stroked-button (click)="copyTabLinkOnly()">
+                <mat-icon>tab</mat-icon>
+                Copy Tab Link
+            </button>
+
+            <button mat-stroked-button (click)="copySearchLinkOnly()">
+                <mat-icon>manage_search</mat-icon>
+                Copy Search Link
+            </button>
+
             <button mat-stroked-button (click)="syncSelected()">
                 <mat-icon>sync</mat-icon>
                 Sync Selection

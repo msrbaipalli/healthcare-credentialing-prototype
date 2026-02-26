@@ -78,6 +78,7 @@ export class ProviderProfilePageComponent {
         { initialValue: (this.route.snapshot.queryParamMap.get('tab') ?? 'overview').toLowerCase() }
     );
 
+    // q= deep-linkable search query
     private qSig = toSignal(
         this.route.queryParamMap.pipe(map(q => (q.get('q') ?? '').trim())),
         { initialValue: (this.route.snapshot.queryParamMap.get('q') ?? '').trim() }
@@ -124,15 +125,13 @@ export class ProviderProfilePageComponent {
         return this.providersSig().find(p => p.id === id) ?? null;
     });
 
-    // NEW: Search control; initialize from q=
+    // Search control initialized from q=
     searchCtrl = new FormControl('', { nonNullable: true });
 
     ngOnInit() {
-        // Keep input in sync with query param q= (back/forward + deep links)
         const q = this.qSig();
         this.searchCtrl.setValue(q, { emitEvent: false });
 
-        // When user types, push to URL (merge with tab and other params)
         this.searchCtrl.valueChanges.subscribe(v => {
             const value = (v ?? '').trim();
             this.router.navigate([], {
@@ -143,7 +142,6 @@ export class ProviderProfilePageComponent {
         });
     }
 
-    // Normalize query for filtering
     query = computed(() => (this.qSig() ?? '').toLowerCase());
 
     private includes(text: string, q: string) {
@@ -176,7 +174,7 @@ export class ProviderProfilePageComponent {
         return p ? this.mock.listNotes(p.id) : [];
     });
 
-    // Filtered data (based on q=)
+    // Filtered data
     checks = computed(() => {
         const q = this.query();
         const list = this.checksAll();
@@ -222,7 +220,7 @@ export class ProviderProfilePageComponent {
         );
     });
 
-    // Unified timeline (built from FILTERED lists so search affects it naturally)
+    // Unified timeline (built from filtered lists)
     timeline = computed<TimelineItem[]>(() => {
         const p = this.provider();
         if (!p) return [];
@@ -302,11 +300,35 @@ export class ProviderProfilePageComponent {
         this.router.navigate(['/provider', next.id], { queryParamsHandling: 'merge' });
     }
 
-    // Copy link
+    // Copy links
     copyDeepLink() {
         const url = window.location.href; // includes ?tab= and ?q=
         this.clipboard.copy(url);
         this.toastSig.set('Link copied');
+        setTimeout(() => this.toastSig.set(''), 1600);
+    }
+
+    copyTabLinkOnly() {
+        // keep tab, remove q
+        const url = new URL(window.location.href);
+        const tab = this.tab();
+        url.searchParams.set('tab', tab);
+        url.searchParams.delete('q');
+        this.clipboard.copy(url.toString());
+        this.toastSig.set('Tab link copied');
+        setTimeout(() => this.toastSig.set(''), 1600);
+    }
+
+    copySearchLinkOnly() {
+        // keep current tab + q (if empty, behaves like deep link without q)
+        const url = new URL(window.location.href);
+        const tab = this.tab();
+        const q = this.qSig();
+        url.searchParams.set('tab', tab);
+        if (q) url.searchParams.set('q', q);
+        else url.searchParams.delete('q');
+        this.clipboard.copy(url.toString());
+        this.toastSig.set('Search link copied');
         setTimeout(() => this.toastSig.set(''), 1600);
     }
 
