@@ -58,6 +58,10 @@ The system demonstrates how credentialing can shift from batch processing to int
 
 ## 🏗️ System Architecture
 
+<p align="center">
+  <img src="/src/docs/credentialing-architecture.png" width="900"/>
+</p>
+
 ### Frontend
 - Angular (Standalone Components)
 - TypeScript
