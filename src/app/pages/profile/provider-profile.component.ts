@@ -78,6 +78,11 @@ export class ProviderProfilePageComponent {
         { initialValue: (this.route.snapshot.queryParamMap.get('tab') ?? 'overview').toLowerCase() }
     );
 
+    private qSig = toSignal(
+        this.route.queryParamMap.pipe(map(q => (q.get('q') ?? '').trim())),
+        { initialValue: (this.route.snapshot.queryParamMap.get('q') ?? '').trim() }
+    );
+
     providerId = computed(() => this.idSig());
 
     tab = computed(() => {
@@ -119,26 +124,105 @@ export class ProviderProfilePageComponent {
         return this.providersSig().find(p => p.id === id) ?? null;
     });
 
-    checks = computed<VerificationCheck[]>(() => {
+    // NEW: Search control; initialize from q=
+    searchCtrl = new FormControl('', { nonNullable: true });
+
+    ngOnInit() {
+        // Keep input in sync with query param q= (back/forward + deep links)
+        const q = this.qSig();
+        this.searchCtrl.setValue(q, { emitEvent: false });
+
+        // When user types, push to URL (merge with tab and other params)
+        this.searchCtrl.valueChanges.subscribe(v => {
+            const value = (v ?? '').trim();
+            this.router.navigate([], {
+                relativeTo: this.route,
+                queryParams: { q: value || null }, // null removes param
+                queryParamsHandling: 'merge',
+            });
+        });
+    }
+
+    // Normalize query for filtering
+    query = computed(() => (this.qSig() ?? '').toLowerCase());
+
+    private includes(text: string, q: string) {
+        return text.toLowerCase().includes(q);
+    }
+
+    // Raw data
+    checksAll = computed<VerificationCheck[]>(() => {
         const p = this.provider();
         return p ? this.mock.getVerificationChecks(p.id) : [];
     });
 
-    ledger = computed<LedgerEntry[]>(() => {
+    ledgerAll = computed<LedgerEntry[]>(() => {
         const p = this.provider();
         return p ? this.mock.getLedger(p.id) : [];
     });
 
-    evidence = computed<EvidenceItem[]>(() => {
+    evidenceAll = computed<EvidenceItem[]>(() => {
         const p = this.provider();
         return p ? this.mock.getEvidenceForProvider(p.id) : [];
     });
 
-    alerts = computed<AlertItem[]>(() => {
+    alertsAll = computed<AlertItem[]>(() => {
         const p = this.provider();
         return p ? this.mock.listAlertsForProvider(p.id) : [];
     });
 
+    notesAll = computed<ProviderNote[]>(() => {
+        const p = this.provider();
+        return p ? this.mock.listNotes(p.id) : [];
+    });
+
+    // Filtered data (based on q=)
+    checks = computed(() => {
+        const q = this.query();
+        const list = this.checksAll();
+        if (!q) return list;
+        return list.filter(c =>
+            [c.name, c.source, c.status, c.details].some(v => this.includes(String(v), q))
+        );
+    });
+
+    ledger = computed(() => {
+        const q = this.query();
+        const list = this.ledgerAll();
+        if (!q) return list;
+        return list.filter(l =>
+            [l.action, l.actor, l.txHash, l.summary].some(v => this.includes(String(v), q))
+        );
+    });
+
+    evidence = computed(() => {
+        const q = this.query();
+        const list = this.evidenceAll();
+        if (!q) return list;
+        return list.filter(e =>
+            [e.title, e.category, e.source, e.status, e.summary].some(v => this.includes(String(v), q))
+        );
+    });
+
+    alerts = computed(() => {
+        const q = this.query();
+        const list = this.alertsAll();
+        if (!q) return list;
+        return list.filter(a =>
+            [a.title, a.severity, a.source, a.details, a.recommendedAction, a.status].some(v => this.includes(String(v), q))
+        );
+    });
+
+    notes = computed(() => {
+        const q = this.query();
+        const list = this.notesAll();
+        if (!q) return list;
+        return list.filter(n =>
+            [n.text, n.author, n.status].some(v => this.includes(String(v), q))
+        );
+    });
+
+    // Unified timeline (built from FILTERED lists so search affects it naturally)
     timeline = computed<TimelineItem[]>(() => {
         const p = this.provider();
         if (!p) return [];
@@ -177,12 +261,8 @@ export class ProviderProfilePageComponent {
         }
     }
 
+    // Notes actions
     noteInput = new FormControl('', { nonNullable: true });
-
-    notes = computed<ProviderNote[]>(() => {
-        const p = this.provider();
-        return p ? this.mock.listNotes(p.id) : [];
-    });
 
     addNote() {
         const p = this.provider();
@@ -196,6 +276,7 @@ export class ProviderProfilePageComponent {
         this.mock.toggleNote(id);
     }
 
+    // Navigation (prev/next)
     index = computed(() => {
         const id = this.providerId();
         return this.providersSig().findIndex(p => p.id === id);
@@ -221,11 +302,16 @@ export class ProviderProfilePageComponent {
         this.router.navigate(['/provider', next.id], { queryParamsHandling: 'merge' });
     }
 
+    // Copy link
     copyDeepLink() {
-        const url = window.location.href; // includes ?tab=
+        const url = window.location.href; // includes ?tab= and ?q=
         this.clipboard.copy(url);
         this.toastSig.set('Link copied');
         setTimeout(() => this.toastSig.set(''), 1600);
+    }
+
+    clearSearch() {
+        this.searchCtrl.setValue('');
     }
 
     statusLabel(s: VerificationStatus) {

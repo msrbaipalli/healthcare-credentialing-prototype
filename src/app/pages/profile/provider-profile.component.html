@@ -69,6 +69,16 @@
         </div>
     </mat-card>
 
+    <mat-card class="panel searchbar">
+        <mat-icon>search</mat-icon>
+        <input matInput [formControl]="searchCtrl"
+            placeholder="Search within this provider (checks, ledger, evidence, timeline, notes)..." />
+        <button mat-stroked-button (click)="clearSearch()" [disabled]="!searchCtrl.value">
+            <mat-icon>close</mat-icon>
+            Clear
+        </button>
+    </mat-card>
+
     <mat-card class="panel tabs-shell">
         <mat-tab-group [selectedIndex]="tabIndex()" (selectedIndexChange)="setTabFromIndex($event)">
 
@@ -156,6 +166,10 @@
                                     <mat-icon>timeline</mat-icon>
                                     Timeline
                                 </button>
+                                <button mat-stroked-button (click)="setTabFromIndex(5)">
+                                    <mat-icon>note</mat-icon>
+                                    Notes
+                                </button>
                             </div>
                         </mat-card>
                     </div>
@@ -182,6 +196,12 @@
 
                             <div class="detail">{{ c.details }}</div>
                         </mat-card>
+
+                        <mat-card class="inner empty" *ngIf="checks().length === 0">
+                            <mat-icon>search_off</mat-icon>
+                            <div class="item-title">No matching checks</div>
+                            <div class="muted">Try clearing the search.</div>
+                        </mat-card>
                     </mat-card>
                 </div>
             </mat-tab>
@@ -201,6 +221,12 @@
                                 <div class="mono hash">{{ e.txHash }}</div>
                             </div>
                             <div class="detail">{{ e.summary }}</div>
+                        </mat-card>
+
+                        <mat-card class="inner empty" *ngIf="ledger().length === 0">
+                            <mat-icon>search_off</mat-icon>
+                            <div class="item-title">No matching ledger entries</div>
+                            <div class="muted">Try clearing the search.</div>
                         </mat-card>
                     </mat-card>
                 </div>
@@ -228,6 +254,12 @@
                                 </span>
                             </div>
                             <div class="detail">{{ ev.summary }}</div>
+                        </mat-card>
+
+                        <mat-card class="inner empty" *ngIf="evidence().length === 0">
+                            <mat-icon>search_off</mat-icon>
+                            <div class="item-title">No matching evidence</div>
+                            <div class="muted">Try clearing the search.</div>
                         </mat-card>
 
                         <div class="footer-actions">
@@ -271,6 +303,12 @@
 
                             <div class="detail">{{ t.subtitle }}</div>
                         </mat-card>
+
+                        <mat-card class="inner empty" *ngIf="timeline().length === 0">
+                            <mat-icon>search_off</mat-icon>
+                            <div class="item-title">No matching timeline items</div>
+                            <div class="muted">Try clearing the search.</div>
+                        </mat-card>
                     </mat-card>
                 </div>
             </mat-tab>
@@ -307,6 +345,12 @@
                                     {{ n.status === 'done' ? 'Reopen' : 'Mark done' }}
                                 </button>
                             </div>
+                        </mat-card>
+
+                        <mat-card class="inner empty" *ngIf="notes().length === 0">
+                            <mat-icon>search_off</mat-icon>
+                            <div class="item-title">No matching notes</div>
+                            <div class="muted">Try clearing the search.</div>
                         </mat-card>
                     </mat-card>
                 </div>
