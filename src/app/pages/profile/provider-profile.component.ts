@@ -87,7 +87,7 @@ export class ProviderProfilePageComponent {
     providerId = computed(() => this.idSig());
 
     tab = computed(() => {
-        const t = this.tabSig();
+        const t: any = this.tabSig();
         const allowed = new Set(['overview', 'checks', 'ledger', 'evidence', 'timeline', 'notes']);
         return allowed.has(t) ? t : 'overview';
     });
@@ -129,7 +129,7 @@ export class ProviderProfilePageComponent {
     searchCtrl = new FormControl('', { nonNullable: true });
 
     ngOnInit() {
-        const q = this.qSig();
+        const q: any = this.qSig();
         this.searchCtrl.setValue(q, { emitEvent: false });
 
         this.searchCtrl.valueChanges.subscribe(v => {
