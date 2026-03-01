@@ -272,6 +272,13 @@
     background: rgba(0, 0, 0, 0.14);
 }
 
+.searchbar {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 14px;
+}
+
 .toast {
     position: fixed;
     right: 18px;
@@ -281,6 +288,12 @@
     font-weight: 900;
     background: rgba(0, 0, 0, 0.08);
     backdrop-filter: blur(6px);
+}
+
+mark {
+    padding: 0 4px;
+    border-radius: 6px;
+    background: rgba(0, 0, 0, 0.14);
 }
 
 @media (max-width: 1100px) {

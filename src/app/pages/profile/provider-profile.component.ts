@@ -26,6 +26,8 @@ import {
     ProviderNote,
 } from '../../services/credentialing-mock.service';
 
+import { HighlightPipe } from '../pipes/highlight.pipe';
+
 type TimelineType = 'alert' | 'check' | 'ledger';
 
 interface TimelineItem {
@@ -52,6 +54,7 @@ interface TimelineItem {
         MatProgressBarModule,
         MatTabsModule,
         MatInputModule,
+        HighlightPipe, // NEW
     ],
     templateUrl: './provider-profile.component.html',
     styleUrl: './provider-profile.component.scss',
@@ -78,7 +81,6 @@ export class ProviderProfilePageComponent {
         { initialValue: (this.route.snapshot.queryParamMap.get('tab') ?? 'overview').toLowerCase() }
     );
 
-    // q= deep-linkable search query
     private qSig = toSignal(
         this.route.queryParamMap.pipe(map(q => (q.get('q') ?? '').trim())),
         { initialValue: (this.route.snapshot.queryParamMap.get('q') ?? '').trim() }
@@ -87,7 +89,7 @@ export class ProviderProfilePageComponent {
     providerId = computed(() => this.idSig());
 
     tab = computed(() => {
-        const t: any = this.tabSig();
+        const t = this.tabSig();
         const allowed = new Set(['overview', 'checks', 'ledger', 'evidence', 'timeline', 'notes']);
         return allowed.has(t) ? t : 'overview';
     });
@@ -129,14 +131,14 @@ export class ProviderProfilePageComponent {
     searchCtrl = new FormControl('', { nonNullable: true });
 
     ngOnInit() {
-        const q: any = this.qSig();
+        const q = this.qSig();
         this.searchCtrl.setValue(q, { emitEvent: false });
 
         this.searchCtrl.valueChanges.subscribe(v => {
             const value = (v ?? '').trim();
             this.router.navigate([], {
                 relativeTo: this.route,
-                queryParams: { q: value || null }, // null removes param
+                queryParams: { q: value || null },
                 queryParamsHandling: 'merge',
             });
         });
@@ -220,7 +222,6 @@ export class ProviderProfilePageComponent {
         );
     });
 
-    // Unified timeline (built from filtered lists)
     timeline = computed<TimelineItem[]>(() => {
         const p = this.provider();
         if (!p) return [];
@@ -302,14 +303,13 @@ export class ProviderProfilePageComponent {
 
     // Copy links
     copyDeepLink() {
-        const url = window.location.href; // includes ?tab= and ?q=
+        const url = window.location.href;
         this.clipboard.copy(url);
         this.toastSig.set('Link copied');
         setTimeout(() => this.toastSig.set(''), 1600);
     }
 
     copyTabLinkOnly() {
-        // keep tab, remove q
         const url = new URL(window.location.href);
         const tab = this.tab();
         url.searchParams.set('tab', tab);
@@ -320,7 +320,6 @@ export class ProviderProfilePageComponent {
     }
 
     copySearchLinkOnly() {
-        // keep current tab + q (if empty, behaves like deep link without q)
         const url = new URL(window.location.href);
         const tab = this.tab();
         const q = this.qSig();
