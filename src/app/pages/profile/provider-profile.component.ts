@@ -9,6 +9,7 @@ import { MatDividerModule } from '@angular/material/divider';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatInputModule } from '@angular/material/input';
+import { MatChipsModule } from '@angular/material/chips'; // NEW
 
 import { Clipboard } from '@angular/cdk/clipboard';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -24,7 +25,7 @@ import {
     EvidenceItem,
     AlertItem,
     ProviderNote,
-} from '../../services/credentialing-mock.service';
+} from '../services/credentialing-mock.service';
 
 import { HighlightPipe } from '../pipes/highlight.pipe';
 
@@ -54,10 +55,11 @@ interface TimelineItem {
         MatProgressBarModule,
         MatTabsModule,
         MatInputModule,
-        HighlightPipe, // NEW
+        MatChipsModule, // NEW
+        HighlightPipe,
     ],
-    templateUrl: './provider-profile.component.html',
-    styleUrl: './provider-profile.component.scss',
+    templateUrl: './provider-profile-page.component.html',
+    styleUrl: './provider-profile-page.component.scss',
 })
 export class ProviderProfilePageComponent {
     constructor(
@@ -129,6 +131,21 @@ export class ProviderProfilePageComponent {
 
     // Search control initialized from q=
     searchCtrl = new FormControl('', { nonNullable: true });
+
+    suggestionChips = [
+        { label: 'NPPES', value: 'nppes' },
+        { label: 'PECOS', value: 'pecos' },
+        { label: 'OIG/LEIE', value: 'oig' },
+        { label: 'License', value: 'license' },
+        { label: 'Ledger', value: 'ledger' },
+        { label: 'Evidence', value: 'evidence' },
+        { label: 'Pending', value: 'pending' },
+        { label: 'Failed', value: 'failed' },
+    ] as const;
+
+    applySuggestion(value: string) {
+        this.searchCtrl.setValue(value);
+    }
 
     ngOnInit() {
         const q = this.qSig();
@@ -209,7 +226,9 @@ export class ProviderProfilePageComponent {
         const list = this.alertsAll();
         if (!q) return list;
         return list.filter(a =>
-            [a.title, a.severity, a.source, a.details, a.recommendedAction, a.status].some(v => this.includes(String(v), q))
+            [a.title, a.severity, a.source, a.details, a.recommendedAction, a.status].some(v =>
+                this.includes(String(v), q)
+            )
         );
     });
 
