@@ -1,88 +1,10 @@
 <ng-container *ngIf="provider() as p; else notFound">
-    <mat-card class="head">
-        <div class="left">
-            <div class="crumbs">
-                <a routerLink="/" class="crumb">Dashboard</a>
-                <span class="sep">/</span>
-                <span class="crumb-current">Provider</span>
-            </div>
-
-            <div class="title-row">
-                <div class="h1" [innerHTML]="p.fullName | highlight: query()"></div>
-
-                <span [class]="statusChipClass(p.status)">
-                    <mat-icon class="chip-icon">{{ statusIcon(p.status) }}</mat-icon>
-                    {{ statusLabel(p.status) }}
-                </span>
-            </div>
-
-            <div class="muted"
-                [innerHTML]="('NPI ' + p.npi + ' · ' + p.specialty + ' · ' + p.organization + ' · ' + p.state) | highlight: query()">
-            </div>
-
-            <div class="meta">
-                <div class="meta-item">
-                    <div class="meta-label">Last verified</div>
-                    <div class="meta-value">{{ p.lastVerifiedAt | date:'MMM d, y · h:mm a' }}</div>
-                </div>
-
-                <div class="meta-item">
-                    <div class="meta-label">Risk score</div>
-                    <div class="risk">
-                        <mat-progress-bar mode="determinate" [value]="p.riskScore"></mat-progress-bar>
-                        <div class="risk-score">{{ p.riskScore }}</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="actions">
-            <button mat-stroked-button (click)="prevProvider()" [disabled]="!hasPrev()">
-                <mat-icon>chevron_left</mat-icon>
-                Prev
-            </button>
-
-            <button mat-stroked-button (click)="nextProvider()" [disabled]="!hasNext()">
-                Next
-                <mat-icon>chevron_right</mat-icon>
-            </button>
-
-            <button mat-stroked-button (click)="copyDeepLink()">
-                <mat-icon>link</mat-icon>
-                Copy Link
-            </button>
-
-            <button mat-stroked-button (click)="copyTabLinkOnly()">
-                <mat-icon>tab</mat-icon>
-                Copy Tab Link
-            </button>
-
-            <button mat-stroked-button (click)="copySearchLinkOnly()">
-                <mat-icon>manage_search</mat-icon>
-                Copy Search Link
-            </button>
-
-            <button mat-stroked-button (click)="syncSelected()">
-                <mat-icon>sync</mat-icon>
-                Sync Selection
-            </button>
-
-            <button mat-stroked-button (click)="requestMoreInfo()">
-                <mat-icon>mark_email_unread</mat-icon>
-                Request Info
-            </button>
-
-            <button mat-flat-button (click)="approve()">
-                <mat-icon>check_circle</mat-icon>
-                Approve
-            </button>
-        </div>
-    </mat-card>
-
     <mat-card class="panel searchbar">
         <mat-icon>search</mat-icon>
-        <input matInput [formControl]="searchCtrl"
+
+        <input matInput [formControl]="searchCtrl" (keydown.enter)="saveQuery()"
             placeholder="Search within this provider (checks, ledger, evidence, timeline, notes)..." />
+
         <button mat-stroked-button (click)="clearSearch()" [disabled]="!searchCtrl.value">
             <mat-icon>close</mat-icon>
             Clear
@@ -98,9 +20,24 @@
         </mat-chip-set>
     </mat-card>
 
+    <mat-card class="panel chipbar" *ngIf="historySig().length > 0">
+        <div class="chipbar-head">
+            <div class="muted">Recent searches</div>
+            <button mat-stroked-button (click)="clearHistory()">
+                <mat-icon>delete</mat-icon>
+                Clear history
+            </button>
+        </div>
+
+        <mat-chip-set>
+            <mat-chip *ngFor="let h of historySig()" (click)="applyHistory(h)">
+                {{ h }}
+            </mat-chip>
+        </mat-chip-set>
+    </mat-card>
+
     <mat-card class="panel tabs-shell">
         <mat-tab-group [selectedIndex]="tabIndex()" (selectedIndexChange)="setTabFromIndex($event)">
-
         </mat-tab-group>
     </mat-card>
 

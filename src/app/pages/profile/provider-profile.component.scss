@@ -296,6 +296,14 @@ mark {
     background: rgba(0, 0, 0, 0.14);
 }
 
+.chipbar-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
 @media (max-width: 1100px) {
     .grid {
         grid-template-columns: 1fr;

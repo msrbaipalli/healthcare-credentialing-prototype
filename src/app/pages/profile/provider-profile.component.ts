@@ -9,7 +9,7 @@ import { MatDividerModule } from '@angular/material/divider';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatInputModule } from '@angular/material/input';
-import { MatChipsModule } from '@angular/material/chips'; // NEW
+import { MatChipsModule } from '@angular/material/chips';
 
 import { Clipboard } from '@angular/cdk/clipboard';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -25,7 +25,7 @@ import {
     EvidenceItem,
     AlertItem,
     ProviderNote,
-} from '../services/credentialing-mock.service';
+} from '../../services/credentialing-mock.service';
 
 import { HighlightPipe } from '../pipes/highlight.pipe';
 
@@ -55,7 +55,7 @@ interface TimelineItem {
         MatProgressBarModule,
         MatTabsModule,
         MatInputModule,
-        MatChipsModule, // NEW
+        MatChipsModule,
         HighlightPipe,
     ],
     templateUrl: './provider-profile-page.component.html',
@@ -70,7 +70,6 @@ export class ProviderProfilePageComponent {
     ) { }
 
     toastSig = signal('');
-
     providersSig = signal<Provider[]>(this.mock.listProviders());
 
     private idSig = toSignal(
@@ -143,14 +142,18 @@ export class ProviderProfilePageComponent {
         { label: 'Failed', value: 'failed' },
     ] as const;
 
-    applySuggestion(value: string) {
-        this.searchCtrl.setValue(value);
-    }
+    private readonly HISTORY_KEY = 'cnx.provider.searchHistory.v1';
+    historySig = signal<string[]>([]);
 
     ngOnInit() {
+        // Load history once
+        this.historySig.set(this.loadHistory());
+
+        // Initialize input from ?q=
         const q = this.qSig();
         this.searchCtrl.setValue(q, { emitEvent: false });
 
+        // Keep URL q= synced while typing
         this.searchCtrl.valueChanges.subscribe(v => {
             const value = (v ?? '').trim();
             this.router.navigate([], {
@@ -159,6 +162,59 @@ export class ProviderProfilePageComponent {
                 queryParamsHandling: 'merge',
             });
         });
+    }
+
+    applySuggestion(value: string) {
+        this.searchCtrl.setValue(value);
+        this.saveQuery(value);
+    }
+
+    // Save query when user hits Enter (or when we call it manually)
+    saveQuery(forceValue?: string) {
+        const raw = (forceValue ?? this.searchCtrl.value ?? '').trim();
+        if (!raw) return;
+
+        const normalized = raw; // keep original casing user typed
+        const existing = this.historySig();
+
+        const next = [normalized, ...existing.filter(x => x.toLowerCase() !== normalized.toLowerCase())].slice(0, 6);
+
+        this.historySig.set(next);
+        this.persistHistory(next);
+
+        this.toastSig.set('Saved to search history');
+        setTimeout(() => this.toastSig.set(''), 1200);
+    }
+
+    applyHistory(q: string) {
+        this.searchCtrl.setValue(q);
+    }
+
+    clearHistory() {
+        this.historySig.set([]);
+        this.persistHistory([]);
+        this.toastSig.set('History cleared');
+        setTimeout(() => this.toastSig.set(''), 1200);
+    }
+
+    private loadHistory(): string[] {
+        try {
+            const raw = localStorage.getItem(this.HISTORY_KEY);
+            if (!raw) return [];
+            const parsed = JSON.parse(raw);
+            if (!Array.isArray(parsed)) return [];
+            return parsed.filter(x => typeof x === 'string').slice(0, 6);
+        } catch {
+            return [];
+        }
+    }
+
+    private persistHistory(list: string[]) {
+        try {
+            localStorage.setItem(this.HISTORY_KEY, JSON.stringify(list.slice(0, 6)));
+        } catch {
+            // ignore
+        }
     }
 
     query = computed(() => (this.qSig() ?? '').toLowerCase());
