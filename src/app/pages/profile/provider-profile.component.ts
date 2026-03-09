@@ -1,4 +1,4 @@
-import { Component, computed, signal } from '@angular/core';
+import { Component, computed, signal, HostListener } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 
@@ -27,14 +27,14 @@ import {
     ProviderNote,
 } from '../../services/credentialing-mock.service';
 
-import { HighlightPipe } from '../pipes/highlight.pipe';
+import { HighlightPipe } from '../../pipes/highlight.pipe';
 
 type TimelineType = 'alert' | 'check' | 'ledger';
 
 interface TimelineItem {
     type: TimelineType;
     title: string;
-    timestamp: string; // ISO
+    timestamp: string;
     subtitle: string;
     status?: VerificationStatus;
     alertSeverity?: string;
@@ -62,6 +62,7 @@ interface TimelineItem {
     styleUrl: './provider-profile-page.component.scss',
 })
 export class ProviderProfilePageComponent {
+
     constructor(
         private route: ActivatedRoute,
         private router: Router,
@@ -70,6 +71,7 @@ export class ProviderProfilePageComponent {
     ) { }
 
     toastSig = signal('');
+
     providersSig = signal<Provider[]>(this.mock.listProviders());
 
     private idSig = toSignal(
@@ -128,34 +130,31 @@ export class ProviderProfilePageComponent {
         return this.providersSig().find(p => p.id === id) ?? null;
     });
 
-    // Search control initialized from q=
     searchCtrl = new FormControl('', { nonNullable: true });
 
     suggestionChips = [
         { label: 'NPPES', value: 'nppes' },
         { label: 'PECOS', value: 'pecos' },
-        { label: 'OIG/LEIE', value: 'oig' },
+        { label: 'OIG', value: 'oig' },
         { label: 'License', value: 'license' },
         { label: 'Ledger', value: 'ledger' },
         { label: 'Evidence', value: 'evidence' },
         { label: 'Pending', value: 'pending' },
         { label: 'Failed', value: 'failed' },
-    ] as const;
+    ];
 
-    private readonly HISTORY_KEY = 'cnx.provider.searchHistory.v1';
+    private HISTORY_KEY = 'provider.search.history';
     historySig = signal<string[]>([]);
 
     ngOnInit() {
-        // Load history once
         this.historySig.set(this.loadHistory());
 
-        // Initialize input from ?q=
         const q = this.qSig();
         this.searchCtrl.setValue(q, { emitEvent: false });
 
-        // Keep URL q= synced while typing
         this.searchCtrl.valueChanges.subscribe(v => {
             const value = (v ?? '').trim();
+
             this.router.navigate([], {
                 relativeTo: this.route,
                 queryParams: { q: value || null },
@@ -169,21 +168,19 @@ export class ProviderProfilePageComponent {
         this.saveQuery(value);
     }
 
-    // Save query when user hits Enter (or when we call it manually)
     saveQuery(forceValue?: string) {
         const raw = (forceValue ?? this.searchCtrl.value ?? '').trim();
         if (!raw) return;
 
-        const normalized = raw; // keep original casing user typed
         const existing = this.historySig();
 
-        const next = [normalized, ...existing.filter(x => x.toLowerCase() !== normalized.toLowerCase())].slice(0, 6);
+        const next = [
+            raw,
+            ...existing.filter(x => x.toLowerCase() !== raw.toLowerCase())
+        ].slice(0, 6);
 
         this.historySig.set(next);
-        this.persistHistory(next);
-
-        this.toastSig.set('Saved to search history');
-        setTimeout(() => this.toastSig.set(''), 1200);
+        localStorage.setItem(this.HISTORY_KEY, JSON.stringify(next));
     }
 
     applyHistory(q: string) {
@@ -192,28 +189,16 @@ export class ProviderProfilePageComponent {
 
     clearHistory() {
         this.historySig.set([]);
-        this.persistHistory([]);
-        this.toastSig.set('History cleared');
-        setTimeout(() => this.toastSig.set(''), 1200);
+        localStorage.removeItem(this.HISTORY_KEY);
     }
 
     private loadHistory(): string[] {
         try {
             const raw = localStorage.getItem(this.HISTORY_KEY);
             if (!raw) return [];
-            const parsed = JSON.parse(raw);
-            if (!Array.isArray(parsed)) return [];
-            return parsed.filter(x => typeof x === 'string').slice(0, 6);
+            return JSON.parse(raw);
         } catch {
             return [];
-        }
-    }
-
-    private persistHistory(list: string[]) {
-        try {
-            localStorage.setItem(this.HISTORY_KEY, JSON.stringify(list.slice(0, 6)));
-        } catch {
-            // ignore
         }
     }
 
@@ -223,108 +208,70 @@ export class ProviderProfilePageComponent {
         return text.toLowerCase().includes(q);
     }
 
-    // Raw data
-    checksAll = computed<VerificationCheck[]>(() => {
+    checks = computed<VerificationCheck[]>(() => {
         const p = this.provider();
-        return p ? this.mock.getVerificationChecks(p.id) : [];
+        if (!p) return [];
+        return this.mock.getVerificationChecks(p.id);
     });
 
-    ledgerAll = computed<LedgerEntry[]>(() => {
+    ledger = computed<LedgerEntry[]>(() => {
         const p = this.provider();
-        return p ? this.mock.getLedger(p.id) : [];
+        if (!p) return [];
+        return this.mock.getLedger(p.id);
     });
 
-    evidenceAll = computed<EvidenceItem[]>(() => {
+    evidence = computed<EvidenceItem[]>(() => {
         const p = this.provider();
-        return p ? this.mock.getEvidenceForProvider(p.id) : [];
+        if (!p) return [];
+        return this.mock.getEvidenceForProvider(p.id);
     });
 
-    alertsAll = computed<AlertItem[]>(() => {
+    alerts = computed<AlertItem[]>(() => {
         const p = this.provider();
-        return p ? this.mock.listAlertsForProvider(p.id) : [];
+        if (!p) return [];
+        return this.mock.listAlertsForProvider(p.id);
     });
 
-    notesAll = computed<ProviderNote[]>(() => {
+    notes = computed<ProviderNote[]>(() => {
         const p = this.provider();
-        return p ? this.mock.listNotes(p.id) : [];
-    });
-
-    // Filtered data
-    checks = computed(() => {
-        const q = this.query();
-        const list = this.checksAll();
-        if (!q) return list;
-        return list.filter(c =>
-            [c.name, c.source, c.status, c.details].some(v => this.includes(String(v), q))
-        );
-    });
-
-    ledger = computed(() => {
-        const q = this.query();
-        const list = this.ledgerAll();
-        if (!q) return list;
-        return list.filter(l =>
-            [l.action, l.actor, l.txHash, l.summary].some(v => this.includes(String(v), q))
-        );
-    });
-
-    evidence = computed(() => {
-        const q = this.query();
-        const list = this.evidenceAll();
-        if (!q) return list;
-        return list.filter(e =>
-            [e.title, e.category, e.source, e.status, e.summary].some(v => this.includes(String(v), q))
-        );
-    });
-
-    alerts = computed(() => {
-        const q = this.query();
-        const list = this.alertsAll();
-        if (!q) return list;
-        return list.filter(a =>
-            [a.title, a.severity, a.source, a.details, a.recommendedAction, a.status].some(v =>
-                this.includes(String(v), q)
-            )
-        );
-    });
-
-    notes = computed(() => {
-        const q = this.query();
-        const list = this.notesAll();
-        if (!q) return list;
-        return list.filter(n =>
-            [n.text, n.author, n.status].some(v => this.includes(String(v), q))
-        );
+        if (!p) return [];
+        return this.mock.listNotes(p.id);
     });
 
     timeline = computed<TimelineItem[]>(() => {
-        const p = this.provider();
-        if (!p) return [];
 
-        const alertItems: TimelineItem[] = this.alerts().map(a => ({
-            type: 'alert',
-            title: a.title,
-            timestamp: a.createdAt,
-            subtitle: `${a.source} · ${a.details} · (${a.status})`,
-            alertSeverity: a.severity,
-        }));
+        const items: TimelineItem[] = [];
 
-        const checkItems: TimelineItem[] = this.checks().map(c => ({
-            type: 'check',
-            title: c.name,
-            timestamp: c.checkedAt,
-            subtitle: `${c.source} · ${c.details}`,
-            status: c.status,
-        }));
+        this.alerts().forEach(a =>
+            items.push({
+                type: 'alert',
+                title: a.title,
+                timestamp: a.createdAt,
+                subtitle: a.details,
+                alertSeverity: a.severity,
+            })
+        );
 
-        const ledgerItems: TimelineItem[] = this.ledger().map(l => ({
-            type: 'ledger',
-            title: l.action,
-            timestamp: l.timestamp,
-            subtitle: `${l.actor} · ${l.txHash} · ${l.summary}`,
-        }));
+        this.checks().forEach(c =>
+            items.push({
+                type: 'check',
+                title: c.name,
+                timestamp: c.checkedAt,
+                subtitle: c.details,
+                status: c.status,
+            })
+        );
 
-        return [...alertItems, ...checkItems, ...ledgerItems].sort((a, b) => b.timestamp.localeCompare(a.timestamp));
+        this.ledger().forEach(l =>
+            items.push({
+                type: 'ledger',
+                title: l.action,
+                timestamp: l.timestamp,
+                subtitle: l.summary,
+            })
+        );
+
+        return items.sort((a, b) => b.timestamp.localeCompare(a.timestamp));
     });
 
     timelineIcon(t: TimelineType) {
@@ -335,13 +282,15 @@ export class ProviderProfilePageComponent {
         }
     }
 
-    // Notes actions
     noteInput = new FormControl('', { nonNullable: true });
 
     addNote() {
         const p = this.provider();
+        if (!p) return;
+
         const text = this.noteInput.value.trim();
-        if (!p || !text) return;
+        if (!text) return;
+
         this.mock.addNote(p.id, text);
         this.noteInput.setValue('');
     }
@@ -350,60 +299,27 @@ export class ProviderProfilePageComponent {
         this.mock.toggleNote(id);
     }
 
-    // Navigation (prev/next)
-    index = computed(() => {
-        const id = this.providerId();
-        return this.providersSig().findIndex(p => p.id === id);
-    });
-
-    hasPrev = computed(() => this.index() > 0);
-    hasNext = computed(() => {
-        const i = this.index();
-        return i >= 0 && i < this.providersSig().length - 1;
-    });
-
     prevProvider() {
-        const i = this.index();
-        if (i <= 0) return;
-        const prev = this.providersSig()[i - 1];
-        this.router.navigate(['/provider', prev.id], { queryParamsHandling: 'merge' });
+        const list = this.providersSig();
+        const index = list.findIndex(p => p.id === this.providerId());
+        if (index <= 0) return;
+
+        this.router.navigate(['/provider', list[index - 1].id]);
     }
 
     nextProvider() {
-        const i = this.index();
-        if (i < 0 || i >= this.providersSig().length - 1) return;
-        const next = this.providersSig()[i + 1];
-        this.router.navigate(['/provider', next.id], { queryParamsHandling: 'merge' });
+        const list = this.providersSig();
+        const index = list.findIndex(p => p.id === this.providerId());
+        if (index >= list.length - 1) return;
+
+        this.router.navigate(['/provider', list[index + 1].id]);
     }
 
-    // Copy links
     copyDeepLink() {
         const url = window.location.href;
         this.clipboard.copy(url);
         this.toastSig.set('Link copied');
-        setTimeout(() => this.toastSig.set(''), 1600);
-    }
-
-    copyTabLinkOnly() {
-        const url = new URL(window.location.href);
-        const tab = this.tab();
-        url.searchParams.set('tab', tab);
-        url.searchParams.delete('q');
-        this.clipboard.copy(url.toString());
-        this.toastSig.set('Tab link copied');
-        setTimeout(() => this.toastSig.set(''), 1600);
-    }
-
-    copySearchLinkOnly() {
-        const url = new URL(window.location.href);
-        const tab = this.tab();
-        const q = this.qSig();
-        url.searchParams.set('tab', tab);
-        if (q) url.searchParams.set('q', q);
-        else url.searchParams.delete('q');
-        this.clipboard.copy(url.toString());
-        this.toastSig.set('Search link copied');
-        setTimeout(() => this.toastSig.set(''), 1600);
+        setTimeout(() => this.toastSig.set(''), 1500);
     }
 
     clearSearch() {
@@ -413,7 +329,7 @@ export class ProviderProfilePageComponent {
     statusLabel(s: VerificationStatus) {
         switch (s) {
             case 'verified': return 'Verified';
-            case 'warning': return 'Needs Attention';
+            case 'warning': return 'Warning';
             case 'failed': return 'Failed';
             case 'pending': return 'Pending';
         }
@@ -435,6 +351,7 @@ export class ProviderProfilePageComponent {
     approve() {
         const p = this.provider();
         if (!p) return;
+
         this.mock.mockApprove(p.id);
         this.providersSig.set(this.mock.listProviders());
     }
@@ -442,6 +359,7 @@ export class ProviderProfilePageComponent {
     requestMoreInfo() {
         const p = this.provider();
         if (!p) return;
+
         this.mock.mockRequestMoreInfo(p.id);
         this.providersSig.set(this.mock.listProviders());
     }
@@ -449,6 +367,33 @@ export class ProviderProfilePageComponent {
     syncSelected() {
         const p = this.provider();
         if (!p) return;
+
         this.mock.selectProviderById(p.id);
+    }
+
+    @HostListener('window:keydown', ['$event'])
+    handleKeyboard(event: KeyboardEvent) {
+
+        const tag = (event.target as HTMLElement)?.tagName?.toLowerCase();
+
+        if (tag === 'input' || tag === 'textarea') return;
+
+        if (event.key === '/') {
+            event.preventDefault();
+            const input = document.querySelector<HTMLInputElement>('input[matinput]');
+            input?.focus();
+        }
+
+        if (event.key === 'Escape') {
+            this.clearSearch();
+        }
+
+        if (event.key === '[') {
+            this.prevProvider();
+        }
+
+        if (event.key === ']') {
+            this.nextProvider();
+        }
     }
 }
