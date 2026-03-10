@@ -11,8 +11,17 @@ import { MatDividerModule } from '@angular/material/divider';
 import { MatTableModule } from '@angular/material/table';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatChipsModule } from '@angular/material/chips';
 
-import { CredentialingMockService, Provider, VerificationStatus, VerificationCheck, LedgerEntry } from '../../services/credentialing-mock.service';
+import {
+    CredentialingMockService,
+    Provider,
+    VerificationStatus,
+    VerificationCheck,
+    LedgerEntry,
+} from '../../services/credentialing-mock.service';
+
+type DashboardFilter = 'all' | VerificationStatus;
 
 @Component({
     standalone: true,
@@ -29,9 +38,10 @@ import { CredentialingMockService, Provider, VerificationStatus, VerificationChe
         MatTableModule,
         MatProgressBarModule,
         MatTooltipModule,
+        MatChipsModule,
     ],
-    templateUrl: './dashboardcomponent.html',
-    styleUrl: './dashboardcomponent.scss',
+    templateUrl: './dashboard.component.html',
+    styleUrl: './dashboard.component.scss',
 })
 export class DashboardPageComponent {
     constructor(public mock: CredentialingMockService, private router: Router) { }
@@ -41,16 +51,35 @@ export class DashboardPageComponent {
     providersSig = signal<Provider[]>(this.mock.listProviders());
     selectedSig = signal<Provider | null>(this.providersSig()[0] ?? null);
 
+    activeFilter = signal<DashboardFilter>('all');
+
+    filterChips: Array<{ key: DashboardFilter; label: string }> = [
+        { key: 'all', label: 'All' },
+        { key: 'verified', label: 'Verified' },
+        { key: 'warning', label: 'Needs Attention' },
+        { key: 'failed', label: 'Failed' },
+        { key: 'pending', label: 'Pending' },
+    ];
+
     ngOnInit() {
         this.mock.selectedProvider$.subscribe(p => this.selectedSig.set(p));
     }
 
     filtered = computed(() => {
         const q = this.query.value.trim().toLowerCase();
-        const list = this.providersSig();
+        const filter = this.activeFilter();
+        let list = this.providersSig();
+
+        if (filter !== 'all') {
+            list = list.filter(p => p.status === filter);
+        }
+
         if (!q) return list;
+
         return list.filter(p =>
-            [p.fullName, p.npi, p.specialty, p.organization, p.state].some(v => v.toLowerCase().includes(q))
+            [p.fullName, p.npi, p.specialty, p.organization, p.state].some(v =>
+                v.toLowerCase().includes(q)
+            )
         );
     });
 
@@ -78,6 +107,15 @@ export class DashboardPageComponent {
 
     queueColumns = ['status', 'name', 'npi', 'specialty', 'risk', 'lastVerified'];
 
+    setFilter(filter: DashboardFilter) {
+        this.activeFilter.set(filter);
+    }
+
+    clearFilters() {
+        this.activeFilter.set('all');
+        this.query.setValue('');
+    }
+
     statusLabel(s: VerificationStatus) {
         switch (s) {
             case 'verified': return 'Verified';
@@ -86,6 +124,7 @@ export class DashboardPageComponent {
             case 'pending': return 'Pending';
         }
     }
+
     statusIcon(s: VerificationStatus) {
         switch (s) {
             case 'verified': return 'verified';
@@ -94,6 +133,7 @@ export class DashboardPageComponent {
             case 'pending': return 'schedule';
         }
     }
+
     statusChipClass(s: VerificationStatus) {
         return `chip chip--${s}`;
     }
