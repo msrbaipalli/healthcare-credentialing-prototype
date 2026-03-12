@@ -12,6 +12,7 @@ import { MatTableModule } from '@angular/material/table';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatChipsModule } from '@angular/material/chips';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 
 import {
     CredentialingMockService,
@@ -39,12 +40,17 @@ type DashboardFilter = 'all' | VerificationStatus;
         MatProgressBarModule,
         MatTooltipModule,
         MatChipsModule,
+        MatSlideToggleModule
     ],
-    templateUrl: './dashboard.component.html',
-    styleUrl: './dashboard.component.scss',
+    templateUrl: './dashboard-page.component.html',
+    styleUrl: './dashboard-page.component.scss',
 })
 export class DashboardPageComponent {
-    constructor(public mock: CredentialingMockService, private router: Router) { }
+
+    constructor(
+        public mock: CredentialingMockService,
+        private router: Router
+    ) { }
 
     query = new FormControl('', { nonNullable: true });
 
@@ -52,6 +58,9 @@ export class DashboardPageComponent {
     selectedSig = signal<Provider | null>(this.providersSig()[0] ?? null);
 
     activeFilter = signal<DashboardFilter>('all');
+
+    // NEW
+    highRiskOnly = signal(false);
 
     filterChips: Array<{ key: DashboardFilter; label: string }> = [
         { key: 'all', label: 'All' },
@@ -66,12 +75,19 @@ export class DashboardPageComponent {
     }
 
     filtered = computed(() => {
+
         const q = this.query.value.trim().toLowerCase();
         const filter = this.activeFilter();
+        const highRisk = this.highRiskOnly();
+
         let list = this.providersSig();
 
         if (filter !== 'all') {
             list = list.filter(p => p.status === filter);
+        }
+
+        if (highRisk) {
+            list = list.filter(p => p.riskScore >= 70);
         }
 
         if (!q) return list;
@@ -84,13 +100,16 @@ export class DashboardPageComponent {
     });
 
     kpis = computed(() => {
+
         const list = this.providersSig();
-        const total = list.length;
-        const verified = list.filter(p => p.status === 'verified').length;
-        const warning = list.filter(p => p.status === 'warning').length;
-        const failed = list.filter(p => p.status === 'failed').length;
-        const pending = list.filter(p => p.status === 'pending').length;
-        return { total, verified, warning, failed, pending };
+
+        return {
+            total: list.length,
+            verified: list.filter(p => p.status === 'verified').length,
+            warning: list.filter(p => p.status === 'warning').length,
+            failed: list.filter(p => p.status === 'failed').length,
+            pending: list.filter(p => p.status === 'pending').length,
+        };
     });
 
     checks = computed<VerificationCheck[]>(() => {
@@ -111,8 +130,13 @@ export class DashboardPageComponent {
         this.activeFilter.set(filter);
     }
 
+    toggleHighRisk(value: boolean) {
+        this.highRiskOnly.set(value);
+    }
+
     clearFilters() {
         this.activeFilter.set('all');
+        this.highRiskOnly.set(false);
         this.query.setValue('');
     }
 
@@ -149,6 +173,7 @@ export class DashboardPageComponent {
     approve() {
         const p = this.selectedSig();
         if (!p) return;
+
         this.mock.mockApprove(p.id);
         this.providersSig.set(this.mock.listProviders());
     }
@@ -156,6 +181,7 @@ export class DashboardPageComponent {
     requestMoreInfo() {
         const p = this.selectedSig();
         if (!p) return;
+
         this.mock.mockRequestMoreInfo(p.id);
         this.providersSig.set(this.mock.listProviders());
     }

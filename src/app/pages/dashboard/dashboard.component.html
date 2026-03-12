@@ -40,6 +40,10 @@
         </mat-chip>
     </mat-chip-set>
 
+    <mat-slide-toggle (change)="toggleHighRisk($event.checked)">
+        High Risk Only
+    </mat-slide-toggle>
+
     <div class="results-count">
         {{ filtered().length }} result{{ filtered().length === 1 ? '' : 's' }}
     </div>
