@@ -1,4 +1,4 @@
-import { Component, computed, signal } from '@angular/core';
+import { Component, computed, signal, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -40,17 +40,13 @@ type DashboardFilter = 'all' | VerificationStatus;
         MatProgressBarModule,
         MatTooltipModule,
         MatChipsModule,
-        MatSlideToggleModule
+        MatSlideToggleModule,
     ],
     templateUrl: './dashboard-page.component.html',
     styleUrl: './dashboard-page.component.scss',
 })
-export class DashboardPageComponent {
-
-    constructor(
-        public mock: CredentialingMockService,
-        private router: Router
-    ) { }
+export class DashboardPageComponent implements OnInit, OnDestroy {
+    constructor(public mock: CredentialingMockService, private router: Router) { }
 
     query = new FormControl('', { nonNullable: true });
 
@@ -58,9 +54,14 @@ export class DashboardPageComponent {
     selectedSig = signal<Provider | null>(this.providersSig()[0] ?? null);
 
     activeFilter = signal<DashboardFilter>('all');
-
-    // NEW
     highRiskOnly = signal(false);
+
+    readonly refreshIntervalSeconds = 15;
+    lastRefreshedAt = signal<Date>(new Date());
+    secondsUntilRefresh = signal<number>(this.refreshIntervalSeconds);
+
+    private refreshTimerId: ReturnType<typeof setInterval> | null = null;
+    private countdownTimerId: ReturnType<typeof setInterval> | null = null;
 
     filterChips: Array<{ key: DashboardFilter; label: string }> = [
         { key: 'all', label: 'All' },
@@ -72,10 +73,41 @@ export class DashboardPageComponent {
 
     ngOnInit() {
         this.mock.selectedProvider$.subscribe(p => this.selectedSig.set(p));
+
+        this.startRefreshTimers();
+    }
+
+    ngOnDestroy() {
+        if (this.refreshTimerId) clearInterval(this.refreshTimerId);
+        if (this.countdownTimerId) clearInterval(this.countdownTimerId);
+    }
+
+    private startRefreshTimers() {
+        this.refreshTimerId = setInterval(() => {
+            this.refreshDashboard();
+        }, this.refreshIntervalSeconds * 1000);
+
+        this.countdownTimerId = setInterval(() => {
+            const next = this.secondsUntilRefresh() - 1;
+            this.secondsUntilRefresh.set(next <= 0 ? this.refreshIntervalSeconds : next);
+        }, 1000);
+    }
+
+    refreshDashboard() {
+        // Simulated refresh: re-read providers from the mock service
+        this.providersSig.set(this.mock.listProviders());
+        this.lastRefreshedAt.set(new Date());
+        this.secondsUntilRefresh.set(this.refreshIntervalSeconds);
+
+        // keep selected provider fresh if it exists
+        const selected = this.selectedSig();
+        if (selected) {
+            const latest = this.mock.listProviders().find(p => p.id === selected.id) ?? selected;
+            this.selectedSig.set(latest);
+        }
     }
 
     filtered = computed(() => {
-
         const q = this.query.value.trim().toLowerCase();
         const filter = this.activeFilter();
         const highRisk = this.highRiskOnly();
@@ -100,16 +132,13 @@ export class DashboardPageComponent {
     });
 
     kpis = computed(() => {
-
         const list = this.providersSig();
-
-        return {
-            total: list.length,
-            verified: list.filter(p => p.status === 'verified').length,
-            warning: list.filter(p => p.status === 'warning').length,
-            failed: list.filter(p => p.status === 'failed').length,
-            pending: list.filter(p => p.status === 'pending').length,
-        };
+        const total = list.length;
+        const verified = list.filter(p => p.status === 'verified').length;
+        const warning = list.filter(p => p.status === 'warning').length;
+        const failed = list.filter(p => p.status === 'failed').length;
+        const pending = list.filter(p => p.status === 'pending').length;
+        return { total, verified, warning, failed, pending };
     });
 
     checks = computed<VerificationCheck[]>(() => {
@@ -173,16 +202,18 @@ export class DashboardPageComponent {
     approve() {
         const p = this.selectedSig();
         if (!p) return;
-
         this.mock.mockApprove(p.id);
         this.providersSig.set(this.mock.listProviders());
+        this.lastRefreshedAt.set(new Date());
+        this.secondsUntilRefresh.set(this.refreshIntervalSeconds);
     }
 
     requestMoreInfo() {
         const p = this.selectedSig();
         if (!p) return;
-
         this.mock.mockRequestMoreInfo(p.id);
         this.providersSig.set(this.mock.listProviders());
+        this.lastRefreshedAt.set(new Date());
+        this.secondsUntilRefresh.set(this.refreshIntervalSeconds);
     }
 }

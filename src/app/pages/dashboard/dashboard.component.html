@@ -21,6 +21,28 @@
     </mat-card>
 </div>
 
+<mat-card class="livebar">
+    <div class="livebar-left">
+        <mat-icon>sync</mat-icon>
+        <div>
+            <div class="livebar-title">Live Verification Feed</div>
+            <div class="livebar-subtitle">
+                Last refreshed {{ lastRefreshedAt() | date:'MMM d, y · h:mm:ss a' }}
+            </div>
+        </div>
+    </div>
+
+    <div class="livebar-right">
+        <div class="countdown">
+            Refresh in {{ secondsUntilRefresh() }}s
+        </div>
+        <button mat-stroked-button (click)="refreshDashboard()">
+            <mat-icon>refresh</mat-icon>
+            Refresh Now
+        </button>
+    </div>
+</mat-card>
+
 <mat-card class="search">
     <mat-icon>search</mat-icon>
     <input matInput [formControl]="query" placeholder="Search providers, NPI, org, state..." />
@@ -40,12 +62,14 @@
         </mat-chip>
     </mat-chip-set>
 
-    <mat-slide-toggle (change)="toggleHighRisk($event.checked)">
-        High Risk Only
-    </mat-slide-toggle>
+    <div class="filters-actions">
+        <mat-slide-toggle (change)="toggleHighRisk($event.checked)" [checked]="highRiskOnly()">
+            High Risk Only
+        </mat-slide-toggle>
 
-    <div class="results-count">
-        {{ filtered().length }} result{{ filtered().length === 1 ? '' : 's' }}
+        <div class="results-count">
+            {{ filtered().length }} result{{ filtered().length === 1 ? '' : 's' }}
+        </div>
     </div>
 </mat-card>
 
