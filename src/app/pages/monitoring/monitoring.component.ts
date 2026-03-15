@@ -8,8 +8,17 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatInputModule } from '@angular/material/input';
 import { MatDividerModule } from '@angular/material/divider';
+import { MatChipsModule } from '@angular/material/chips';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 
-import { CredentialingMockService, AlertItem, Severity, Provider } from '../../services/credentialing-mock.service';
+import {
+    CredentialingMockService,
+    AlertItem,
+    Severity,
+    Provider
+} from '../../services/credentialing-mock.service';
+
+type SeverityFilter = 'all' | Severity;
 
 @Component({
     standalone: true,
@@ -23,6 +32,8 @@ import { CredentialingMockService, AlertItem, Severity, Provider } from '../../s
         MatButtonModule,
         MatInputModule,
         MatDividerModule,
+        MatChipsModule,
+        MatSlideToggleModule,
     ],
     templateUrl: './monitoring.component.html',
     styleUrl: './monitoring.component.scss',
@@ -35,14 +46,54 @@ export class MonitoringPageComponent {
     alertsSig = signal<AlertItem[]>(this.mock.listAlerts());
     providersSig = signal<Provider[]>(this.mock.listProviders());
 
+    activeSeverity = signal<SeverityFilter>('all');
+    openOnly = signal(false);
+
+    severityChips: Array<{ key: SeverityFilter; label: string }> = [
+        { key: 'all', label: 'All' },
+        { key: 'low', label: 'Low' },
+        { key: 'medium', label: 'Medium' },
+        { key: 'high', label: 'High' },
+        { key: 'critical', label: 'Critical' },
+    ];
+
     filtered = computed(() => {
         const q = this.query.value.trim().toLowerCase();
-        const list = this.alertsSig();
+        const severity = this.activeSeverity();
+        const openOnly = this.openOnly();
+
+        let list = this.alertsSig();
+
+        if (severity !== 'all') {
+            list = list.filter(a => a.severity === severity);
+        }
+
+        if (openOnly) {
+            list = list.filter(a => a.status === 'open' || a.status === 'acknowledged');
+        }
+
         if (!q) return list;
+
         return list.filter(a =>
-            [a.title, a.source, a.severity, a.status, a.details].some(v => v.toLowerCase().includes(q))
+            [a.title, a.source, a.severity, a.status, a.details, a.recommendedAction].some(v =>
+                v.toLowerCase().includes(q)
+            )
         );
     });
+
+    setSeverity(filter: SeverityFilter) {
+        this.activeSeverity.set(filter);
+    }
+
+    toggleOpenOnly(value: boolean) {
+        this.openOnly.set(value);
+    }
+
+    clearFilters() {
+        this.query.setValue('');
+        this.activeSeverity.set('all');
+        this.openOnly.set(false);
+    }
 
     severityIcon(s: Severity) {
         switch (s) {
@@ -63,7 +114,7 @@ export class MonitoringPageComponent {
     }
 
     openProfile(providerId: string) {
-        this.router.navigate(['/provider', providerId], { queryParams: { tab: 'overview' } });
+        this.router.navigate(['/provider', providerId], { queryParams: { tab: 'timeline' } });
     }
 
     ack(id: string) {

@@ -7,6 +7,33 @@
     <div class="search">
         <mat-icon>search</mat-icon>
         <input matInput [formControl]="query" placeholder="Filter alerts by keyword..." />
+        <button mat-stroked-button (click)="clearFilters()">
+            <mat-icon>filter_alt_off</mat-icon>
+            Reset
+        </button>
+    </div>
+</mat-card>
+
+<mat-card class="filters">
+    <div class="filters-left">
+        <div class="filters-label">Severity Filters</div>
+
+        <mat-chip-set>
+            <mat-chip *ngFor="let chip of severityChips" [class.active-chip]="activeSeverity() === chip.key"
+                (click)="setSeverity(chip.key)">
+                {{ chip.label }}
+            </mat-chip>
+        </mat-chip-set>
+    </div>
+
+    <div class="filters-right">
+        <mat-slide-toggle [checked]="openOnly()" (change)="toggleOpenOnly($event.checked)">
+            Open alerts only
+        </mat-slide-toggle>
+
+        <div class="results-count">
+            {{ filtered().length }} alert{{ filtered().length === 1 ? '' : 's' }}
+        </div>
     </div>
 </mat-card>
 
@@ -56,5 +83,11 @@
                 </button>
             </div>
         </div>
+    </mat-card>
+
+    <mat-card class="empty" *ngIf="filtered().length === 0">
+        <mat-icon>search_off</mat-icon>
+        <div class="h1">No alerts match the current filters</div>
+        <div class="muted">Try resetting the search, severity filter, or toggle.</div>
     </mat-card>
 </div>
