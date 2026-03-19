@@ -5,8 +5,36 @@
     </div>
 </mat-card>
 
+<mat-card class="filters">
+    <div class="filters-left">
+        <div class="filters-label">Connector Status</div>
+
+        <mat-chip-set>
+            <mat-chip *ngFor="let chip of filterChips" [class.active-chip]="activeFilter() === chip.key"
+                (click)="setFilter(chip.key)">
+                {{ chip.label }}
+            </mat-chip>
+        </mat-chip-set>
+    </div>
+
+    <div class="filters-right">
+        <mat-slide-toggle [checked]="attentionOnly()" (change)="toggleAttentionOnly($event.checked)">
+            Degraded/Down only
+        </mat-slide-toggle>
+
+        <button mat-stroked-button (click)="clearFilters()">
+            <mat-icon>filter_alt_off</mat-icon>
+            Reset
+        </button>
+
+        <div class="results-count">
+            {{ filtered().length }} connector{{ filtered().length === 1 ? '' : 's' }}
+        </div>
+    </div>
+</mat-card>
+
 <div class="grid">
-    <mat-card class="card" *ngFor="let c of connectorsSig()">
+    <mat-card class="card" *ngFor="let c of filtered()">
         <div class="row">
             <div class="left">
                 <div class="title">{{ c.name }}</div>
@@ -51,5 +79,11 @@
                 Configure
             </button>
         </div>
+    </mat-card>
+
+    <mat-card class="empty" *ngIf="filtered().length === 0">
+        <mat-icon>search_off</mat-icon>
+        <div class="h1">No integrations match the current filters</div>
+        <div class="muted">Try resetting the status filter or attention toggle.</div>
     </mat-card>
 </div>
