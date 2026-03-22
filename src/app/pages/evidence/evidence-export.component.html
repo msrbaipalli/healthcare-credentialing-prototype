@@ -19,13 +19,42 @@
     </div>
 </mat-card>
 
+<mat-card class="filters">
+    <div class="filters-left">
+        <div class="filters-label">Evidence Categories</div>
+
+        <mat-chip-set>
+            <mat-chip *ngFor="let chip of categoryChips" [class.active-chip]="activeCategory() === chip.key"
+                (click)="setCategory(chip.key)">
+                {{ chip.label }}
+            </mat-chip>
+        </mat-chip-set>
+    </div>
+
+    <div class="filters-right">
+        <mat-slide-toggle [checked]="issuesOnly()" (change)="toggleIssuesOnly($event.checked)">
+            Issues only
+        </mat-slide-toggle>
+
+        <button mat-stroked-button (click)="clearFilters()">
+            <mat-icon>filter_alt_off</mat-icon>
+            Reset
+        </button>
+
+        <div class="results-count">
+            {{ evidence().length }} item{{ evidence().length === 1 ? '' : 's' }}
+        </div>
+    </div>
+</mat-card>
+
 <div class="grid">
     <mat-card class="item" *ngFor="let e of evidence()">
         <div class="row">
             <div class="left">
                 <div class="title">{{ e.title }}</div>
-                <div class="muted">{{ e.category | uppercase }} · {{ e.source }} · {{ e.timestamp | date:'MMM d, y ·
-                    h:mm a' }}</div>
+                <div class="muted">
+                    {{ e.category | uppercase }} · {{ e.source }} · {{ e.timestamp | date:'MMM d, y · h:mm a' }}
+                </div>
             </div>
 
             <span [class]="chipClass(e.status)">
@@ -37,5 +66,11 @@
         <mat-divider></mat-divider>
 
         <div class="summary">{{ e.summary }}</div>
+    </mat-card>
+
+    <mat-card class="empty" *ngIf="evidence().length === 0">
+        <mat-icon>search_off</mat-icon>
+        <div class="h1">No evidence matches the current filters</div>
+        <div class="muted">Try resetting the category filter or issues toggle.</div>
     </mat-card>
 </div>
