@@ -1,4 +1,97 @@
 <ng-container *ngIf="provider() as p; else notFound">
+    <mat-card class="head">
+        <div class="left">
+            <div class="crumbs">
+                <a routerLink="/" class="crumb">Dashboard</a>
+                <span class="sep">/</span>
+                <span class="crumb-current">Provider</span>
+            </div>
+
+            <div class="title-row">
+                <div class="h1" [innerHTML]="p.fullName | highlight: query()"></div>
+
+                <span [class]="statusChipClass(p.status)">
+                    <mat-icon class="chip-icon">{{ statusIcon(p.status) }}</mat-icon>
+                    {{ statusLabel(p.status) }}
+                </span>
+            </div>
+
+            <div class="muted"
+                [innerHTML]="('NPI ' + p.npi + ' · ' + p.specialty + ' · ' + p.organization + ' · ' + p.state) | highlight: query()">
+            </div>
+
+            <div class="meta">
+                <div class="meta-item">
+                    <div class="meta-label">Last verified</div>
+                    <div class="meta-value">{{ p.lastVerifiedAt | date:'MMM d, y · h:mm a' }}</div>
+                </div>
+
+                <div class="meta-item">
+                    <div class="meta-label">Risk score</div>
+                    <div class="risk">
+                        <mat-progress-bar mode="determinate" [value]="p.riskScore"></mat-progress-bar>
+                        <div class="risk-score">{{ p.riskScore }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="actions">
+            <button mat-stroked-button (click)="prevProvider()">
+                <mat-icon>chevron_left</mat-icon>
+                Prev
+            </button>
+
+            <button mat-stroked-button (click)="nextProvider()">
+                <mat-icon>chevron_right</mat-icon>
+                Next
+            </button>
+
+            <button mat-stroked-button (click)="copyDeepLink()">
+                <mat-icon>link</mat-icon>
+                Copy Link
+            </button>
+
+            <button mat-stroked-button (click)="syncSelected()">
+                <mat-icon>sync</mat-icon>
+                Sync Selection
+            </button>
+
+            <button mat-stroked-button (click)="requestMoreInfo()">
+                <mat-icon>mark_email_unread</mat-icon>
+                Request Info
+            </button>
+
+            <button mat-flat-button (click)="approve()">
+                <mat-icon>check_circle</mat-icon>
+                Approve
+            </button>
+        </div>
+    </mat-card>
+
+    <!-- NEW: quick summary -->
+    <div class="summary-grid">
+        <mat-card class="summary-card">
+            <div class="summary-value">{{ summaryStats().checks }}</div>
+            <div class="summary-label">Checks</div>
+        </mat-card>
+
+        <mat-card class="summary-card">
+            <div class="summary-value">{{ summaryStats().evidence }}</div>
+            <div class="summary-label">Evidence</div>
+        </mat-card>
+
+        <mat-card class="summary-card">
+            <div class="summary-value">{{ summaryStats().alerts }}</div>
+            <div class="summary-label">Alerts</div>
+        </mat-card>
+
+        <mat-card class="summary-card">
+            <div class="summary-value">{{ summaryStats().openNotes }}</div>
+            <div class="summary-label">Open Notes</div>
+        </mat-card>
+    </div>
+
     <mat-card class="panel searchbar">
         <mat-icon>search</mat-icon>
 
@@ -10,13 +103,6 @@
             Clear
         </button>
     </mat-card>
-
-    <div class="shortcut-hint">
-        <span>/ focus search</span>
-        <span>Esc clear</span>
-        <span>[ prev</span>
-        <span>] next</span>
-    </div>
 
     <mat-card class="panel chipbar">
         <div class="muted">Suggestions</div>
@@ -45,6 +131,276 @@
 
     <mat-card class="panel tabs-shell">
         <mat-tab-group [selectedIndex]="tabIndex()" (selectedIndexChange)="setTabFromIndex($event)">
+
+            <mat-tab label="Overview">
+                <div class="tab-pad">
+                    <div class="grid">
+                        <mat-card class="panel">
+                            <div class="panel-title">Provider Snapshot</div>
+                            <div class="snapshot">
+                                <div class="snap-row">
+                                    <div class="snap-label">Provider ID</div>
+                                    <div class="snap-value mono" [innerHTML]="p.id | highlight: query()"></div>
+                                </div>
+                                <div class="snap-row">
+                                    <div class="snap-label">Organization</div>
+                                    <div class="snap-value" [innerHTML]="p.organization | highlight: query()"></div>
+                                </div>
+                                <div class="snap-row">
+                                    <div class="snap-label">Specialty</div>
+                                    <div class="snap-value" [innerHTML]="p.specialty | highlight: query()"></div>
+                                </div>
+                                <div class="snap-row">
+                                    <div class="snap-label">State</div>
+                                    <div class="snap-value" [innerHTML]="p.state | highlight: query()"></div>
+                                </div>
+                            </div>
+
+                            <mat-divider></mat-divider>
+
+                            <div class="callout">
+                                <mat-icon>psychology</mat-icon>
+                                <div>
+                                    <div class="callout-title">AI explanation (mock)</div>
+                                    <div class="muted">
+                                        Risk score is computed from source consistency, recency, and exception signals.
+                                    </div>
+                                </div>
+                            </div>
+                        </mat-card>
+
+                        <mat-card class="panel">
+                            <div class="panel-title">Quick Peek</div>
+                            <div class="muted">Recent check + latest ledger anchor.</div>
+
+                            <mat-card class="inner" *ngIf="checks()[0] as c">
+                                <div class="row">
+                                    <div>
+                                        <div class="item-title" [innerHTML]="c.name | highlight: query()"></div>
+                                        <div class="muted"
+                                            [innerHTML]="(c.source + ' · ' + (c.checkedAt | date:'h:mm a')) | highlight: query()">
+                                        </div>
+                                    </div>
+                                    <span [class]="statusChipClass(c.status)">
+                                        <mat-icon class="chip-icon">{{ statusIcon(c.status) }}</mat-icon>
+                                        {{ statusLabel(c.status) }}
+                                    </span>
+                                </div>
+                                <div class="detail" [innerHTML]="c.details | highlight: query()"></div>
+                            </mat-card>
+
+                            <mat-card class="inner ledger" *ngIf="ledger()[0] as l">
+                                <div class="row">
+                                    <div>
+                                        <div class="item-title" [innerHTML]="l.action | highlight: query()"></div>
+                                        <div class="muted"
+                                            [innerHTML]="((l.timestamp | date:'MMM d, y · h:mm a') + ' · ' + l.actor) | highlight: query()">
+                                        </div>
+                                    </div>
+                                    <div class="mono hash" [innerHTML]="l.txHash | highlight: query()"></div>
+                                </div>
+                                <div class="detail" [innerHTML]="l.summary | highlight: query()"></div>
+                            </mat-card>
+
+                            <div class="footer-actions">
+                                <button mat-stroked-button (click)="setTabFromIndex(1)">
+                                    <mat-icon>task_alt</mat-icon>
+                                    Go to Checks
+                                </button>
+                                <button mat-stroked-button (click)="setTabFromIndex(2)">
+                                    <mat-icon>receipt_long</mat-icon>
+                                    Go to Ledger
+                                </button>
+                                <button mat-stroked-button (click)="setTabFromIndex(3)">
+                                    <mat-icon>folder</mat-icon>
+                                    Go to Evidence
+                                </button>
+                                <button mat-stroked-button (click)="setTabFromIndex(4)">
+                                    <mat-icon>timeline</mat-icon>
+                                    Timeline
+                                </button>
+                                <button mat-stroked-button (click)="setTabFromIndex(5)">
+                                    <mat-icon>note</mat-icon>
+                                    Notes
+                                </button>
+                            </div>
+                        </mat-card>
+                    </div>
+                </div>
+            </mat-tab>
+
+            <mat-tab label="Checks">
+                <div class="tab-pad">
+                    <mat-card class="panel">
+                        <div class="panel-title">Real-time Verification Checks</div>
+
+                        <mat-card class="inner" *ngFor="let c of checks()">
+                            <div class="row">
+                                <div>
+                                    <div class="item-title" [innerHTML]="c.name | highlight: query()"></div>
+                                    <div class="muted"
+                                        [innerHTML]="(c.source + ' · ' + (c.checkedAt | date:'h:mm a')) | highlight: query()">
+                                    </div>
+                                </div>
+
+                                <span [class]="statusChipClass(c.status)">
+                                    <mat-icon class="chip-icon">{{ statusIcon(c.status) }}</mat-icon>
+                                    {{ statusLabel(c.status) }}
+                                </span>
+                            </div>
+
+                            <div class="detail" [innerHTML]="c.details | highlight: query()"></div>
+                        </mat-card>
+
+                        <mat-card class="inner empty" *ngIf="checks().length === 0">
+                            <mat-icon>search_off</mat-icon>
+                            <div class="item-title">No matching checks</div>
+                            <div class="muted">Try clearing the search.</div>
+                        </mat-card>
+                    </mat-card>
+                </div>
+            </mat-tab>
+
+            <mat-tab label="Ledger">
+                <div class="tab-pad">
+                    <mat-card class="panel">
+                        <div class="panel-title">Blockchain Audit Ledger</div>
+
+                        <mat-card class="inner ledger" *ngFor="let e of ledger()">
+                            <div class="row">
+                                <div>
+                                    <div class="item-title" [innerHTML]="e.action | highlight: query()"></div>
+                                    <div class="muted"
+                                        [innerHTML]="((e.timestamp | date:'MMM d, y · h:mm a') + ' · ' + e.actor) | highlight: query()">
+                                    </div>
+                                </div>
+                                <div class="mono hash" [innerHTML]="e.txHash | highlight: query()"></div>
+                            </div>
+                            <div class="detail" [innerHTML]="e.summary | highlight: query()"></div>
+                        </mat-card>
+
+                        <mat-card class="inner empty" *ngIf="ledger().length === 0">
+                            <mat-icon>search_off</mat-icon>
+                            <div class="item-title">No matching ledger entries</div>
+                            <div class="muted">Try clearing the search.</div>
+                        </mat-card>
+                    </mat-card>
+                </div>
+            </mat-tab>
+
+            <mat-tab label="Evidence">
+                <div class="tab-pad">
+                    <mat-card class="panel">
+                        <div class="panel-title">Evidence Bundle Preview</div>
+                        <div class="muted">Deep-linkable and export-ready (mock).</div>
+
+                        <mat-card class="inner evidence" *ngFor="let ev of evidence()">
+                            <div class="row">
+                                <div>
+                                    <div class="item-title" [innerHTML]="ev.title | highlight: query()"></div>
+                                    <div class="muted"
+                                        [innerHTML]="((ev.category | uppercase) + ' · ' + ev.source + ' · ' + (ev.timestamp | date:'MMM d, y · h:mm a')) | highlight: query()">
+                                    </div>
+                                </div>
+
+                                <span [class]="statusChipClass(ev.status)">
+                                    <mat-icon class="chip-icon">{{ statusIcon(ev.status) }}</mat-icon>
+                                    {{ statusLabel(ev.status) }}
+                                </span>
+                            </div>
+                            <div class="detail" [innerHTML]="ev.summary | highlight: query()"></div>
+                        </mat-card>
+
+                        <mat-card class="inner empty" *ngIf="evidence().length === 0">
+                            <mat-icon>search_off</mat-icon>
+                            <div class="item-title">No matching evidence</div>
+                            <div class="muted">Try clearing the search.</div>
+                        </mat-card>
+                    </mat-card>
+                </div>
+            </mat-tab>
+
+            <mat-tab label="Timeline">
+                <div class="tab-pad">
+                    <mat-card class="panel">
+                        <div class="panel-title">Unified Activity Timeline</div>
+                        <div class="muted">Alerts, verification checks, and ledger anchors in one chronological feed.
+                        </div>
+
+                        <mat-card class="inner" *ngFor="let t of timeline().slice(0, 14)">
+                            <div class="row">
+                                <div>
+                                    <div class="item-title">
+                                        <mat-icon class="mini-icon">{{ timelineIcon(t.type) }}</mat-icon>
+                                        <span [innerHTML]="t.title | highlight: query()"></span>
+                                    </div>
+                                    <div class="muted">{{ t.timestamp | date:'MMM d, y · h:mm a' }}</div>
+                                </div>
+
+                                <ng-container *ngIf="t.status as s">
+                                    <span [class]="statusChipClass(s)">
+                                        <mat-icon class="chip-icon">{{ statusIcon(s) }}</mat-icon>
+                                        {{ statusLabel(s) }}
+                                    </span>
+                                </ng-container>
+                            </div>
+
+                            <div class="detail" [innerHTML]="t.subtitle | highlight: query()"></div>
+                        </mat-card>
+
+                        <mat-card class="inner empty" *ngIf="timeline().length === 0">
+                            <mat-icon>search_off</mat-icon>
+                            <div class="item-title">No matching timeline items</div>
+                            <div class="muted">Try clearing the search.</div>
+                        </mat-card>
+                    </mat-card>
+                </div>
+            </mat-tab>
+
+            <mat-tab label="Notes">
+                <div class="tab-pad">
+                    <mat-card class="panel">
+                        <div class="panel-title">Internal Notes & Tasks</div>
+                        <div class="muted">Ops-only notes for credentialing workflow (mock).</div>
+
+                        <div class="note-add">
+                            <mat-icon>note_add</mat-icon>
+                            <input matInput [formControl]="noteInput" placeholder="Add a note or task for ops…" />
+                            <button mat-flat-button (click)="addNote()">
+                                <mat-icon>add</mat-icon>
+                                Add
+                            </button>
+                        </div>
+
+                        <mat-card class="inner" *ngFor="let n of notes()">
+                            <div class="row">
+                                <div>
+                                    <div class="item-title">
+                                        <span
+                                            [class]="'note-dot ' + (n.status === 'done' ? 'note-dot--done' : 'note-dot--open')"></span>
+                                        <span [innerHTML]="n.text | highlight: query()"></span>
+                                    </div>
+                                    <div class="muted"
+                                        [innerHTML]="(n.author + ' · ' + (n.createdAt | date:'MMM d, y · h:mm a')) | highlight: query()">
+                                    </div>
+                                </div>
+
+                                <button mat-stroked-button (click)="toggleNote(n.id)">
+                                    <mat-icon>{{ n.status === 'done' ? 'undo' : 'done' }}</mat-icon>
+                                    {{ n.status === 'done' ? 'Reopen' : 'Mark done' }}
+                                </button>
+                            </div>
+                        </mat-card>
+
+                        <mat-card class="inner empty" *ngIf="notes().length === 0">
+                            <mat-icon>search_off</mat-icon>
+                            <div class="item-title">No matching notes</div>
+                            <div class="muted">Try clearing the search.</div>
+                        </mat-card>
+                    </mat-card>
+                </div>
+            </mat-tab>
+
         </mat-tab-group>
     </mat-card>
 

@@ -25,9 +25,9 @@ import {
     EvidenceItem,
     AlertItem,
     ProviderNote,
-} from '../../services/credentialing-mock.service';
+} from '../services/credentialing-mock.service';
 
-import { HighlightPipe } from '../../pipes/highlight.pipe';
+import { HighlightPipe } from '../pipes/highlight.pipe';
 
 type TimelineType = 'alert' | 'check' | 'ledger';
 
@@ -62,7 +62,6 @@ interface TimelineItem {
     styleUrl: './provider-profile-page.component.scss',
 })
 export class ProviderProfilePageComponent {
-
     constructor(
         private route: ActivatedRoute,
         private router: Router,
@@ -71,7 +70,6 @@ export class ProviderProfilePageComponent {
     ) { }
 
     toastSig = signal('');
-
     providersSig = signal<Provider[]>(this.mock.listProviders());
 
     private idSig = toSignal(
@@ -238,8 +236,16 @@ export class ProviderProfilePageComponent {
         return this.mock.listNotes(p.id);
     });
 
-    timeline = computed<TimelineItem[]>(() => {
+    summaryStats = computed(() => {
+        const checks = this.checks().length;
+        const evidence = this.evidence().length;
+        const alerts = this.alerts().length;
+        const openNotes = this.notes().filter(n => n.status === 'open').length;
 
+        return { checks, evidence, alerts, openNotes };
+    });
+
+    timeline = computed<TimelineItem[]>(() => {
         const items: TimelineItem[] = [];
 
         this.alerts().forEach(a =>
@@ -373,7 +379,6 @@ export class ProviderProfilePageComponent {
 
     @HostListener('window:keydown', ['$event'])
     handleKeyboard(event: KeyboardEvent) {
-
         const tag = (event.target as HTMLElement)?.tagName?.toLowerCase();
 
         if (tag === 'input' || tag === 'textarea') return;
