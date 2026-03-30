@@ -13,6 +13,7 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { MatSelectModule } from '@angular/material/select';
 
 import {
     CredentialingMockService,
@@ -23,6 +24,7 @@ import {
 } from '../../services/credentialing-mock.service';
 
 type DashboardFilter = 'all' | VerificationStatus;
+type DashboardSort = 'risk_desc' | 'risk_asc' | 'verified_desc' | 'name_asc';
 
 @Component({
     standalone: true,
@@ -41,6 +43,7 @@ type DashboardFilter = 'all' | VerificationStatus;
         MatTooltipModule,
         MatChipsModule,
         MatSlideToggleModule,
+        MatSelectModule,
     ],
     templateUrl: './dashboard-page.component.html',
     styleUrl: './dashboard-page.component.scss',
@@ -55,6 +58,9 @@ export class DashboardPageComponent implements OnInit, OnDestroy {
 
     activeFilter = signal<DashboardFilter>('all');
     highRiskOnly = signal(false);
+
+    // NEW
+    sortBy = signal<DashboardSort>('risk_desc');
 
     readonly refreshIntervalSeconds = 15;
     lastRefreshedAt = signal<Date>(new Date());
@@ -71,9 +77,15 @@ export class DashboardPageComponent implements OnInit, OnDestroy {
         { key: 'pending', label: 'Pending' },
     ];
 
+    sortOptions: Array<{ key: DashboardSort; label: string }> = [
+        { key: 'risk_desc', label: 'Highest Risk' },
+        { key: 'risk_asc', label: 'Lowest Risk' },
+        { key: 'verified_desc', label: 'Recently Verified' },
+        { key: 'name_asc', label: 'Name A–Z' },
+    ];
+
     ngOnInit() {
         this.mock.selectedProvider$.subscribe(p => this.selectedSig.set(p));
-
         this.startRefreshTimers();
     }
 
@@ -94,12 +106,10 @@ export class DashboardPageComponent implements OnInit, OnDestroy {
     }
 
     refreshDashboard() {
-        // Simulated refresh: re-read providers from the mock service
         this.providersSig.set(this.mock.listProviders());
         this.lastRefreshedAt.set(new Date());
         this.secondsUntilRefresh.set(this.refreshIntervalSeconds);
 
-        // keep selected provider fresh if it exists
         const selected = this.selectedSig();
         if (selected) {
             const latest = this.mock.listProviders().find(p => p.id === selected.id) ?? selected;
@@ -111,8 +121,9 @@ export class DashboardPageComponent implements OnInit, OnDestroy {
         const q = this.query.value.trim().toLowerCase();
         const filter = this.activeFilter();
         const highRisk = this.highRiskOnly();
+        const sort = this.sortBy();
 
-        let list = this.providersSig();
+        let list = [...this.providersSig()];
 
         if (filter !== 'all') {
             list = list.filter(p => p.status === filter);
@@ -122,13 +133,33 @@ export class DashboardPageComponent implements OnInit, OnDestroy {
             list = list.filter(p => p.riskScore >= 70);
         }
 
-        if (!q) return list;
+        if (q) {
+            list = list.filter(p =>
+                [p.fullName, p.npi, p.specialty, p.organization, p.state].some(v =>
+                    v.toLowerCase().includes(q)
+                )
+            );
+        }
 
-        return list.filter(p =>
-            [p.fullName, p.npi, p.specialty, p.organization, p.state].some(v =>
-                v.toLowerCase().includes(q)
-            )
-        );
+        switch (sort) {
+            case 'risk_desc':
+                list.sort((a, b) => b.riskScore - a.riskScore);
+                break;
+            case 'risk_asc':
+                list.sort((a, b) => a.riskScore - b.riskScore);
+                break;
+            case 'verified_desc':
+                list.sort(
+                    (a, b) =>
+                        new Date(b.lastVerifiedAt).getTime() - new Date(a.lastVerifiedAt).getTime()
+                );
+                break;
+            case 'name_asc':
+                list.sort((a, b) => a.fullName.localeCompare(b.fullName));
+                break;
+        }
+
+        return list;
     });
 
     kpis = computed(() => {
@@ -163,9 +194,15 @@ export class DashboardPageComponent implements OnInit, OnDestroy {
         this.highRiskOnly.set(value);
     }
 
+    // NEW
+    setSort(value: DashboardSort) {
+        this.sortBy.set(value);
+    }
+
     clearFilters() {
         this.activeFilter.set('all');
         this.highRiskOnly.set(false);
+        this.sortBy.set('risk_desc');
         this.query.setValue('');
     }
 

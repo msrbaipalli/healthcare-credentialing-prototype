@@ -53,19 +53,30 @@
 </mat-card>
 
 <mat-card class="filters">
-    <div class="filters-label">Status Filters</div>
+    <div class="filters-left">
+        <div class="filters-label">Status Filters</div>
 
-    <mat-chip-set>
-        <mat-chip *ngFor="let chip of filterChips" [class.active-chip]="activeFilter() === chip.key"
-            (click)="setFilter(chip.key)">
-            {{ chip.label }}
-        </mat-chip>
-    </mat-chip-set>
+        <mat-chip-set>
+            <mat-chip *ngFor="let chip of filterChips" [class.active-chip]="activeFilter() === chip.key"
+                (click)="setFilter(chip.key)">
+                {{ chip.label }}
+            </mat-chip>
+        </mat-chip-set>
+    </div>
 
-    <div class="filters-actions">
+    <div class="filters-right">
         <mat-slide-toggle (change)="toggleHighRisk($event.checked)" [checked]="highRiskOnly()">
             High Risk Only
         </mat-slide-toggle>
+
+        <mat-form-field appearance="outline" class="sort-field">
+            <mat-label>Sort By</mat-label>
+            <mat-select [value]="sortBy()" (valueChange)="setSort($event)">
+                <mat-option *ngFor="let option of sortOptions" [value]="option.key">
+                    {{ option.label }}
+                </mat-option>
+            </mat-select>
+        </mat-form-field>
 
         <div class="results-count">
             {{ filtered().length }} result{{ filtered().length === 1 ? '' : 's' }}
@@ -135,7 +146,7 @@
         <div class="empty-state" *ngIf="filtered().length === 0">
             <mat-icon>search_off</mat-icon>
             <div class="empty-title">No providers match the current filters</div>
-            <div class="empty-subtitle">Try resetting search or status filters.</div>
+            <div class="empty-subtitle">Try resetting search, filters, or sort options.</div>
         </div>
     </mat-card>
 

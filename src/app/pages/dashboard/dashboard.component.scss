@@ -82,6 +82,11 @@
     flex-wrap: wrap;
 }
 
+.filters-left {
+    display: grid;
+    gap: 8px;
+}
+
 .filters-label {
     font-size: 12px;
     font-weight: 800;
@@ -98,6 +103,10 @@
 .active-chip {
     background: rgba(0, 0, 0, 0.12);
     font-weight: 800;
+}
+
+.sort-field {
+    width: 190px;
 }
 
 .results-count {
@@ -308,5 +317,9 @@
 
     .detail-grid {
         grid-template-columns: 1fr;
+    }
+
+    .sort-field {
+        width: 100%;
     }
 }
