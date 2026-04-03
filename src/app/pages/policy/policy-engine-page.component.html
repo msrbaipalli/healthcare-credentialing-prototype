@@ -3,7 +3,29 @@
         <div class="h1">Policy Engine</div>
         <div class="muted">Rules that govern auto-approval vs manual review (mock).</div>
     </div>
+
+    <button mat-stroked-button (click)="resetDefaults()">
+        <mat-icon>restart_alt</mat-icon>
+        Reset to Defaults
+    </button>
 </mat-card>
+
+<div class="summary-grid">
+    <mat-card class="summary-card">
+        <div class="summary-value">{{ summary().total }}</div>
+        <div class="summary-label">Total Rules</div>
+    </mat-card>
+
+    <mat-card class="summary-card">
+        <div class="summary-value">{{ summary().enabled }}</div>
+        <div class="summary-label">Enabled</div>
+    </mat-card>
+
+    <mat-card class="summary-card">
+        <div class="summary-value">{{ summary().autoApprove }}</div>
+        <div class="summary-label">Auto-Approve</div>
+    </mat-card>
+</div>
 
 <div class="grid">
     <mat-card class="rule" *ngFor="let r of rulesSig()">
@@ -14,9 +36,13 @@
             </div>
 
             <div class="toggles">
-                <mat-slide-toggle [checked]="r.enabled" (change)="toggleEnabled(r)">Enabled</mat-slide-toggle>
-                <mat-slide-toggle [checked]="r.autoApprove"
-                    (change)="toggleAutoApprove(r)">Auto-approve</mat-slide-toggle>
+                <mat-slide-toggle [checked]="r.enabled" (change)="toggleEnabled(r)">
+                    Enabled
+                </mat-slide-toggle>
+
+                <mat-slide-toggle [checked]="r.autoApprove" (change)="toggleAutoApprove(r)">
+                    Auto-approve
+                </mat-slide-toggle>
             </div>
         </div>
 
@@ -45,6 +71,7 @@
                 <mat-icon>science</mat-icon>
                 Simulate
             </button>
+
             <button mat-flat-button>
                 <mat-icon>save</mat-icon>
                 Save Policy

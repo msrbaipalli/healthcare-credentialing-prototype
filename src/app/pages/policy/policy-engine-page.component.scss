@@ -2,6 +2,11 @@
     padding: 14px;
     border-radius: 16px;
     margin-bottom: 14px;
+    display: flex;
+    justify-content: space-between;
+    gap: 14px;
+    align-items: center;
+    flex-wrap: wrap;
 }
 
 .h1 {
@@ -12,6 +17,29 @@
 .muted {
     font-size: 12px;
     opacity: 0.8;
+}
+
+.summary-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+    margin-bottom: 14px;
+}
+
+.summary-card {
+    padding: 14px;
+    border-radius: 16px;
+}
+
+.summary-value {
+    font-size: 28px;
+    font-weight: 900;
+}
+
+.summary-label {
+    font-size: 12px;
+    opacity: 0.8;
+    font-weight: 800;
 }
 
 .grid {
@@ -87,6 +115,10 @@
 
 @media (max-width: 900px) {
     .controls {
+        grid-template-columns: 1fr;
+    }
+
+    .summary-grid {
         grid-template-columns: 1fr;
     }
 }
