@@ -14,6 +14,28 @@
     </div>
 </mat-card>
 
+<div class="summary-grid">
+    <mat-card class="summary-card">
+        <div class="summary-value">{{ summary().total }}</div>
+        <div class="summary-label">Total Alerts</div>
+    </mat-card>
+
+    <mat-card class="summary-card">
+        <div class="summary-value">{{ summary().open }}</div>
+        <div class="summary-label">Open</div>
+    </mat-card>
+
+    <mat-card class="summary-card">
+        <div class="summary-value">{{ summary().acknowledged }}</div>
+        <div class="summary-label">Acknowledged</div>
+    </mat-card>
+
+    <mat-card class="summary-card">
+        <div class="summary-value">{{ summary().resolved }}</div>
+        <div class="summary-label">Resolved</div>
+    </mat-card>
+</div>
+
 <mat-card class="filters">
     <div class="filters-left">
         <div class="filters-label">Severity Filters</div>

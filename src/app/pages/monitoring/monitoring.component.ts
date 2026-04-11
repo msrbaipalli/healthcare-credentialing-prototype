@@ -35,8 +35,8 @@ type SeverityFilter = 'all' | Severity;
         MatChipsModule,
         MatSlideToggleModule,
     ],
-    templateUrl: './monitoring.component.html',
-    styleUrl: './monitoring.component.scss',
+    templateUrl: './monitoring-page.component.html',
+    styleUrl: './monitoring-page.component.scss',
 })
 export class MonitoringPageComponent {
     constructor(public mock: CredentialingMockService, private router: Router) { }
@@ -56,6 +56,17 @@ export class MonitoringPageComponent {
         { key: 'high', label: 'High' },
         { key: 'critical', label: 'Critical' },
     ];
+
+    // NEW: summary counts
+    summary = computed(() => {
+        const list = this.alertsSig();
+        return {
+            total: list.length,
+            open: list.filter(a => a.status === 'open').length,
+            acknowledged: list.filter(a => a.status === 'acknowledged').length,
+            resolved: list.filter(a => a.status === 'resolved').length,
+        };
+    });
 
     filtered = computed(() => {
         const q = this.query.value.trim().toLowerCase();
