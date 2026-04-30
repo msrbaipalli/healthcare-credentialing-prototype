@@ -14,6 +14,11 @@
     </div>
 </mat-card>
 
+<div class="live-indicator">
+    <mat-icon>schedule</mat-icon>
+    <span>Last updated {{ secondsSinceUpdate() }}s ago</span>
+</div>
+
 <div class="summary-grid">
     <mat-card class="summary-card">
         <div class="summary-value">{{ summary().total }}</div>

@@ -1,4 +1,4 @@
-import { Component, computed, signal } from '@angular/core';
+import { Component, computed, signal, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -38,7 +38,7 @@ type SeverityFilter = 'all' | Severity;
     templateUrl: './monitoring-page.component.html',
     styleUrl: './monitoring-page.component.scss',
 })
-export class MonitoringPageComponent {
+export class MonitoringPageComponent implements OnInit, OnDestroy {
     constructor(public mock: CredentialingMockService, private router: Router) { }
 
     query = new FormControl('', { nonNullable: true });
@@ -49,6 +49,11 @@ export class MonitoringPageComponent {
     activeSeverity = signal<SeverityFilter>('all');
     openOnly = signal(false);
 
+    lastUpdatedAt = signal<Date>(new Date());
+    secondsSinceUpdate = signal(0);
+
+    private timerId: ReturnType<typeof setInterval> | null = null;
+
     severityChips: Array<{ key: SeverityFilter; label: string }> = [
         { key: 'all', label: 'All' },
         { key: 'low', label: 'Low' },
@@ -57,7 +62,24 @@ export class MonitoringPageComponent {
         { key: 'critical', label: 'Critical' },
     ];
 
-    // NEW: summary counts
+    ngOnInit() {
+        this.startTimer();
+    }
+
+    ngOnDestroy() {
+        if (this.timerId) clearInterval(this.timerId);
+    }
+
+    private startTimer() {
+        this.timerId = setInterval(() => {
+            const seconds = Math.floor(
+                (Date.now() - this.lastUpdatedAt().getTime()) / 1000
+            );
+
+            this.secondsSinceUpdate.set(seconds);
+        }, 1000);
+    }
+
     summary = computed(() => {
         const list = this.alertsSig();
         return {
@@ -131,10 +153,17 @@ export class MonitoringPageComponent {
     ack(id: string) {
         this.mock.setAlertStatus(id, 'acknowledged');
         this.alertsSig.set(this.mock.listAlerts());
+        this.touchUpdatedAt();
     }
 
     resolve(id: string) {
         this.mock.setAlertStatus(id, 'resolved');
         this.alertsSig.set(this.mock.listAlerts());
+        this.touchUpdatedAt();
+    }
+
+    private touchUpdatedAt() {
+        this.lastUpdatedAt.set(new Date());
+        this.secondsSinceUpdate.set(0);
     }
 }
