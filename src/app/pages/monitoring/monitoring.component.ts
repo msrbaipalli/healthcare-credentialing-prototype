@@ -15,7 +15,7 @@ import {
     CredentialingMockService,
     AlertItem,
     Severity,
-    Provider
+    Provider,
 } from '../../services/credentialing-mock.service';
 
 type SeverityFilter = 'all' | Severity;
@@ -82,11 +82,23 @@ export class MonitoringPageComponent implements OnInit, OnDestroy {
 
     summary = computed(() => {
         const list = this.alertsSig();
+
         return {
             total: list.length,
             open: list.filter(a => a.status === 'open').length,
             acknowledged: list.filter(a => a.status === 'acknowledged').length,
             resolved: list.filter(a => a.status === 'resolved').length,
+        };
+    });
+
+    severitySummary = computed(() => {
+        const list = this.alertsSig();
+
+        return {
+            critical: list.filter(a => a.severity === 'critical').length,
+            high: list.filter(a => a.severity === 'high').length,
+            medium: list.filter(a => a.severity === 'medium').length,
+            low: list.filter(a => a.severity === 'low').length,
         };
     });
 
@@ -130,11 +142,16 @@ export class MonitoringPageComponent implements OnInit, OnDestroy {
 
     severityIcon(s: Severity) {
         switch (s) {
-            case 'info': return 'info';
-            case 'low': return 'report';
-            case 'medium': return 'warning';
-            case 'high': return 'error';
-            case 'critical': return 'crisis_alert';
+            case 'info':
+                return 'info';
+            case 'low':
+                return 'report';
+            case 'medium':
+                return 'warning';
+            case 'high':
+                return 'error';
+            case 'critical':
+                return 'crisis_alert';
         }
     }
 

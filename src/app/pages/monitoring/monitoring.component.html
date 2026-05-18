@@ -41,6 +41,28 @@
     </mat-card>
 </div>
 
+<div class="severity-strip">
+    <div class="severity-pill severity-pill--critical">
+        <span class="severity-count">{{ severitySummary().critical }}</span>
+        <span>Critical</span>
+    </div>
+
+    <div class="severity-pill severity-pill--high">
+        <span class="severity-count">{{ severitySummary().high }}</span>
+        <span>High</span>
+    </div>
+
+    <div class="severity-pill severity-pill--medium">
+        <span class="severity-count">{{ severitySummary().medium }}</span>
+        <span>Medium</span>
+    </div>
+
+    <div class="severity-pill severity-pill--low">
+        <span class="severity-count">{{ severitySummary().low }}</span>
+        <span>Low</span>
+    </div>
+</div>
+
 <mat-card class="filters">
     <div class="filters-left">
         <div class="filters-label">Severity Filters</div>
